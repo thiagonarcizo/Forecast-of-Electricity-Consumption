@@ -22,8 +22,8 @@ def load_all_data():
     data['acorn_details'] = pd.read_csv('data/00_raw/acorn_details.csv', encoding='ISO-8859-1')
     data['temperatures'] = pd.read_csv('data/00_raw/temperatures.csv', sep=';', decimal=',', encoding='utf-8')
     data['uk_bank_holidays'] = pd.read_csv('data/00_raw/uk_bank_holidays.csv')
-    data['weather_daily'] = pd.read_csv('data/00_raw/weather_daily_darksky.csv')
-    data['weather_hourly'] = pd.read_csv('data/00_raw/weather_hourly_darksky.csv')
+    data['weather_daily'] = pd.read_parquet('data/01_interim/weather_daily_darksky_cleaned.parquet')
+    data['weather_hourly'] = pd.read_parquet('data/01_interim/weather_hourly_darksky_cleaned.parquet')
     
     # Load processed data from parquet
     data['group_4_daily_predict'] = pd.read_parquet('data/02_processed/parquet/group_4_daily_predict.parquet')
@@ -33,24 +33,46 @@ def load_all_data():
     
     return data
 
-def fix_datetime_formats(data):
-    """Fix datetime formats for all datasets"""
-    # Fix temperatures datetime
-    data['temperatures']['DateTime'] = pd.to_datetime(data['temperatures']['DateTime'], format='mixed')
-    
-    # Fix bank holidays datetime
-    data['uk_bank_holidays']['Bank holidays'] = pd.to_datetime(data['uk_bank_holidays']['Bank holidays'], format='mixed')
-    
-    # Fix weather daily datetime columns
-    datetime_columns = ['temperatureMaxTime', 'temperatureMinTime', 'apparentTemperatureMinTime', 
-                       'apparentTemperatureHighTime', 'time', 'sunsetTime', 'sunriseTime', 
-                       'temperatureHighTime', 'uvIndexTime', 'temperatureLowTime', 
-                       'apparentTemperatureMaxTime', 'apparentTemperatureLowTime']
-    
-    for col in datetime_columns:
-        data['weather_daily'][col] = pd.to_datetime(data['weather_daily'][col])
-    
-    return data
+def fix_weather_daily_date(weather_daily):
+    """
+    Ensures weather_daily has a 'Date' column of type datetime.date, handling both DatetimeIndex and column cases.
+    """
+    df = weather_daily.copy()
+    if isinstance(df.index, pd.DatetimeIndex):
+        df = df.reset_index()
+    if 'Date' not in df.columns:
+        # Try to find a date-like column
+        for col in df.columns:
+            if 'date' in col.lower():
+                df['Date'] = pd.to_datetime(df[col]).dt.date
+                break
+        else:
+            raise ValueError("No date column found in weather_daily DataFrame.")
+    else:
+        df['Date'] = pd.to_datetime(df['Date']).dt.date
+    return df
+
+def merge_daily_consumption_weather(consumption_daily, weather_daily, consumption_date_col='Date', weather_date_col='Date'):
+    """
+    Merges daily consumption and weather DataFrames on the date, using fix_weather_daily_date for robust handling.
+    """
+    # Prepare consumption data
+    df_conso = consumption_daily.copy()
+    if consumption_date_col not in df_conso.columns:
+        # Try to find a date-like column
+        for col in df_conso.columns:
+            if 'date' in col.lower():
+                df_conso['Date'] = pd.to_datetime(df_conso[col]).dt.date
+                break
+        else:
+            raise ValueError("No date column found in consumption_daily DataFrame.")
+    else:
+        df_conso['Date'] = pd.to_datetime(df_conso[consumption_date_col]).dt.date
+    # Prepare weather data
+    df_weather = fix_weather_daily_date(weather_daily)
+    # Merge
+    merged = pd.merge(df_conso, df_weather, left_on='Date', right_on='Date', how='inner')
+    return merged
 
 # Seasonal analysis functions
 def get_season(month):
@@ -304,18 +326,3 @@ def perform_holiday_statistical_analysis(data, acorn_groups, consumption_col='Co
 # Global constants
 DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 SEASON_ORDER = ['Winter', 'Spring', 'Summer', 'Fall']
-
-#######################################
-
-def load_weather_data() -> pd.DataFrame:
-
-    """
-    Load and preprocess the weather data from a CSV file.
-
-    Returns:
-        pd.DataFrame: The preprocessed DataFrame with 'date' as the index.
-    """
-    df = pd.read_csv(r'data\00_raw\weather_daily_darksky.csv')
-    df = preprocess_weather_daily(df)
-
-    return df
