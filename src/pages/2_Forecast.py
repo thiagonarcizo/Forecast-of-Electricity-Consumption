@@ -109,8 +109,6 @@ with med_term_tab:
   - Record the date and predicted value for later analysis.
 """)
 
-        st.image("src/img/plot2lgb.png")
-
         st.markdown("""
 ## Comparison
 
@@ -125,6 +123,13 @@ with med_term_tab:
 
 **Because the rolling approach continually incorporates the most recent information and adjusts forecasts dynamically, it typically yields more accurate and realistic results than a static projection.**
 """)
+        
+    st.image("src/img/plot2lgb.png")
+
+    st.header("Future Predictions - Rolling Forecast")
+
+    st.image("src/img/plot5lgb.png")
+    st.image("src/img/plot4lgb.png")
 
     with model_tab2:
         st.subheader("LSTM Forecast") 
