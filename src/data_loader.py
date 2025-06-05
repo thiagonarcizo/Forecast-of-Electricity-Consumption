@@ -321,7 +321,626 @@ def perform_holiday_statistical_analysis(data, acorn_groups, consumption_col='Co
             
     return pd.DataFrame(results)
 
-############################################################################################################
+def plot_daily_acorn_consumption(daily, uk_bank_holidays, acorn_types=None):
+    """Plot daily, weekly, monthly, and seasonal consumption for each Acorn group, with holidays highlighted."""
+    import matplotlib.pyplot as plt
+    import pandas as pd
+    if acorn_types is None:
+        acorn_types = daily['Acorn'].unique()
+    # Ensure date is datetime
+    if not pd.api.types.is_datetime64_any_dtype(daily['Date']):
+        daily['Date'] = pd.to_datetime(daily['Date'])
+    acorn_data = {acorn: daily[daily['Acorn'] == acorn].reset_index(drop=True) for acorn in acorn_types}
+    # Daily average
+    daily_avg_consumption = {acorn: df[['Date', 'Conso_kWh']].reset_index(drop=True) for acorn, df in acorn_data.items()}
+    bank_holiday_dates = pd.to_datetime(uk_bank_holidays['Bank holidays']).dt.date
+    plt.figure(figsize=(12, 8))
+    for acorn, daily_avg in daily_avg_consumption.items():
+        plt.plot(daily_avg['Date'], daily_avg['Conso_kWh'], label=acorn)
+        bh_dates = []
+        bh_conso = []
+        for date in sorted(bank_holiday_dates):
+            if date in daily_avg['Date'].dt.date.values:
+                value = daily_avg.loc[daily_avg['Date'].dt.date == date, 'Conso_kWh'].values
+                if len(value) > 0:
+                    bh_dates.append(date)
+                    bh_conso.append(value[0])
+        plt.scatter(bh_dates, bh_conso, color='red', s=10, zorder=5)
+    plt.title('Daily Average Consumption by Acorn Type\n(Red dots: UK Bank Holidays)')
+    plt.xlabel('Date')
+    plt.ylabel('Average Consumption (kWh)')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+    # By weekday
+    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    daily_avg_by_weekday = {}
+    for acorn, data in acorn_data.items():
+        data = data.copy()
+        data['Weekday'] = data['Date'].dt.dayofweek
+        avg_by_weekday = data.groupby('Weekday', as_index=False)['Conso_kWh'].mean()
+        avg_by_weekday['Day'] = avg_by_weekday['Weekday'].map(dict(enumerate(day_names)))
+        daily_avg_by_weekday[acorn] = avg_by_weekday
+    plt.figure(figsize=(10, 6))
+    for acorn, avg_by_weekday in daily_avg_by_weekday.items():
+        plt.plot(avg_by_weekday['Day'], avg_by_weekday['Conso_kWh'], label=acorn, marker='o')
+    plt.title('Average Consumption by Day of the Week (All Year)')
+    plt.xlabel('Day of the Week')
+    plt.ylabel('Average Consumption (kWh)')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+    # By weekday and season
+    seasons = ['Winter', 'Spring', 'Summer', 'Autumn']
+    fig, axes = plt.subplots(1, len(acorn_data), figsize=(20, 6), sharey=True)
+    for ax, (acorn, data) in zip(axes, acorn_data.items()):
+        data = data.copy()
+        data['Season'] = pd.cut(data['Date'].dt.month, bins=[0, 3, 6, 9, 12], labels=seasons, right=False)
+        data['Weekday'] = data['Date'].dt.dayofweek
+        for season in seasons:
+            season_data = data[data['Season'] == season]
+            avg_by_weekday = season_data.groupby('Weekday', as_index=False)['Conso_kWh'].mean()
+            avg_by_weekday['Day'] = avg_by_weekday['Weekday'].map(dict(enumerate(day_names)))
+            ax.plot(avg_by_weekday['Day'], avg_by_weekday['Conso_kWh'], label=season, marker='o')
+        ax.set_title(f'{acorn}')
+        ax.set_xlabel('Day of the Week')
+        ax.set_ylabel('Average Consumption (kWh)')
+        ax.legend()
+        ax.grid()
+    fig.suptitle('Average Consumption by Day of the Week for Each Season (per Acorn)')
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+    # Weekly
+    weekly_avg_consumption = {}
+    for acorn, data in acorn_data.items():
+        data = data.copy()
+        data['Week'] = data['Date'].dt.isocalendar().week
+        weekly_avg = data.groupby('Week', as_index=False)['Conso_kWh'].mean()
+        weekly_avg_consumption[acorn] = weekly_avg
+    plt.figure(figsize=(12, 8))
+    for acorn, weekly_avg in weekly_avg_consumption.items():
+        plt.plot(weekly_avg['Week'], weekly_avg['Conso_kWh'], label=acorn)
+    plt.title('Weekly Average Consumption by Acorn Type')
+    plt.xlabel('Week of the Year')
+    plt.ylabel('Average Consumption (kWh)')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+    # Seasonal
+    seasonal_avg_consumption = {}
+    for acorn, data in acorn_data.items():
+        data = data.copy()
+        data['Season'] = pd.cut(data['Date'].dt.month, bins=[0, 3, 6, 9, 12], labels=seasons, right=False)
+        seasonal_avg = data.groupby('Season', as_index=False, observed=False)['Conso_kWh'].mean()
+        seasonal_avg_consumption[acorn] = seasonal_avg
+    plt.figure(figsize=(12, 8))
+    for acorn, seasonal_avg in seasonal_avg_consumption.items():
+        plt.plot(seasonal_avg['Season'], seasonal_avg['Conso_kWh'], label=acorn, marker='o')
+    plt.title('Seasonal Average Consumption by Acorn Type')
+    plt.xlabel('Season of the Year')
+    plt.ylabel('Average Consumption (kWh)')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+    # Monthly
+    monthly_avg_consumption = {}
+    for acorn, data in acorn_data.items():
+        data = data.copy()
+        data['Month'] = data['Date'].dt.month
+        monthly_avg = data.groupby('Month', as_index=False)['Conso_kWh'].mean()
+        monthly_avg_consumption[acorn] = monthly_avg
+    plt.figure(figsize=(12, 8))
+    for acorn, monthly_avg in monthly_avg_consumption.items():
+        plt.plot(monthly_avg['Month'], monthly_avg['Conso_kWh'], label=acorn, marker='o')
+    plt.title('Monthly Average Consumption by Acorn Type')
+    plt.xlabel('Month of the Year')
+    plt.ylabel('Average Consumption (kWh)')
+    plt.legend()
+    plt.grid()
+    plt.tight_layout()
+    plt.show()
+
+def plot_daily_acorn_outlier_boxplots(daily, acorn_data=None, uk_bank_holidays=None):
+    """Plot boxplots of daily consumption by Acorn group, day of week, season, and month, overlaying outliers and highlighting bank holidays.
+    
+    Parameters:
+    -----------
+    daily : DataFrame
+        Daily consumption data with at least Date, Acorn, and Conso_kWh columns
+    acorn_data : dict or DataFrame, optional
+        If dict: mapping of Acorn groups to DataFrames with consumption data
+        If DataFrame: data with Acorn column and consumption data
+        If None: will use daily parameter for all calculations
+    uk_bank_holidays : DataFrame, optional
+        DataFrame with 'Bank holidays' column of holiday dates
+        
+    Notes:
+    ------
+    This function handles various input formats and performs datetime validation
+    """
+    import numpy as np
+    import pandas as pd
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+    
+    # Helper function to get outlier indices
+    def get_outlier_indices(series):
+        q1 = series.quantile(0.25)
+        q3 = series.quantile(0.75)
+        iqr = q3 - q1
+        lower = q1 - 1.5 * iqr
+        upper = q3 + 1.5 * iqr
+        return series[(series < lower) | (series > upper)].index
+    
+    # Helper function to safely convert Series to DataFrame
+    def series_to_df(series, name=None):
+        if name is None and hasattr(series, 'name'):
+            name = series.name
+        if name is None:
+            name = 'Conso_kWh'
+        return pd.DataFrame({name: series})
+    
+    # Helper function for checking holiday dates - handles various formats
+    def is_holiday(date_series, holiday_dates_set, holiday_dates_list):
+        """Check if dates in a series are holidays, handling different date formats"""
+        # If we don't have any holiday dates, return False for everything
+        if not holiday_dates_set and not holiday_dates_list:
+            return pd.Series([False] * len(date_series), index=date_series.index)
+        
+        results = pd.Series([False] * len(date_series), index=date_series.index)
+        
+        try:
+            # Convert dates to strings for more reliable matching (YYYY-MM-DD format)
+            holiday_dates_str = set()
+            
+            # Convert date objects to strings
+            if holiday_dates_set:
+                for date_obj in holiday_dates_set:
+                    if hasattr(date_obj, 'strftime'):  # It's a date object
+                        holiday_dates_str.add(date_obj.strftime('%Y-%m-%d'))
+                    elif isinstance(date_obj, str):     # It's already a string
+                        holiday_dates_str.add(date_obj)
+                        
+            # Convert datetime objects to strings
+            if holiday_dates_list:
+                for dt_obj in holiday_dates_list:
+                    if hasattr(dt_obj, 'strftime'):  # It's a datetime object
+                        holiday_dates_str.add(dt_obj.strftime('%Y-%m-%d'))
+                    elif isinstance(dt_obj, str):     # It's already a string
+                        holiday_dates_str.add(dt_obj)
+            
+            # Now check if the input dates are in the holiday set
+            if pd.api.types.is_datetime64_any_dtype(date_series):
+                # Convert datetime series to string format
+                date_strings = date_series.dt.strftime('%Y-%m-%d')
+                results = date_strings.isin(holiday_dates_str)
+            else:
+                # Try to convert to datetime first if it's not already
+                try:
+                    converted_dates = pd.to_datetime(date_series)
+                    date_strings = converted_dates.dt.strftime('%Y-%m-%d')
+                    results = date_strings.isin(holiday_dates_str)
+                except Exception:
+                    # If conversion fails, try direct string comparison
+                    if isinstance(date_series, pd.Series) and date_series.dtype == 'object':
+                        results = date_series.isin(holiday_dates_str)
+            
+            # For debugging, print results
+            holiday_count = results.sum() if isinstance(results, pd.Series) else sum(results)
+            if holiday_count > 0:
+                holiday_dates_found = date_series[results].tolist()[:5] if len(date_series[results]) > 0 else []
+                print(f"Found {holiday_count} holidays matching the following dates: {holiday_dates_found}")
+        except Exception as e:
+            print(f"Error checking holiday dates: {e}")
+        
+        return results
+    
+    # Ensure we have uk_bank_holidays
+    if uk_bank_holidays is None or not isinstance(uk_bank_holidays, pd.DataFrame):
+        uk_bank_holidays = pd.DataFrame({'Bank holidays': []})
+    
+    # If acorn_data is None, create it from daily data
+    if acorn_data is None:
+        acorn_data = daily.copy()
+    
+    # Prepare bank holiday dates in multiple formats for flexible matching
+    try:
+        # Check if we have valid holiday data
+        if isinstance(uk_bank_holidays, pd.DataFrame) and len(uk_bank_holidays) > 0:
+            holiday_column = None
+            
+            # Check for 'Bank holidays' column (case insensitive)
+            for col in uk_bank_holidays.columns:
+                if col.lower() == 'bank holidays':
+                    holiday_column = col
+                    break
+            
+            if holiday_column:
+                print(f"Found holiday column: {holiday_column} with {len(uk_bank_holidays)} entries")
+                
+                # Convert holiday dates to datetime objects
+                holiday_dates = pd.to_datetime(uk_bank_holidays[holiday_column], errors='coerce')
+                valid_dates = holiday_dates.dropna()
+                
+                if len(valid_dates) > 0:
+                    # Get date objects and datetime objects
+                    bank_holiday_dates_list = valid_dates.dt.date.tolist()
+                    bank_holiday_dates_datetime = valid_dates.tolist()
+                    # Use sets for faster lookups
+                    bank_holiday_dates_set = set(bank_holiday_dates_list)
+                    print(f"Processed {len(bank_holiday_dates_set)} valid bank holidays")
+                    print(f"Sample dates: {list(bank_holiday_dates_set)[:3]}")
+                else:
+                    print("No valid dates found in holiday column")
+                    bank_holiday_dates_list = []
+                    bank_holiday_dates_datetime = []
+                    bank_holiday_dates_set = set()
+            else:
+                print(f"No 'Bank holidays' column found. Available columns: {uk_bank_holidays.columns.tolist()}")
+                bank_holiday_dates_list = []
+                bank_holiday_dates_datetime = []
+                bank_holiday_dates_set = set()
+        else:
+            print("No valid bank holiday data provided")
+            bank_holiday_dates_list = []
+            bank_holiday_dates_datetime = []
+            bank_holiday_dates_set = set()
+    except Exception as e:
+        print(f"Error processing holiday dates: {e}")
+        bank_holiday_dates_list = []
+        bank_holiday_dates_datetime = []
+        bank_holiday_dates_set = set()
+    
+    # Handle different possible data structures for acorn_data
+    # If acorn_data is a dict of DataFrames or Series
+    if isinstance(acorn_data, dict):
+        boxplot_dfs = []
+        for acorn, data in acorn_data.items():
+            if isinstance(data, pd.DataFrame):
+                temp_df = data.copy()
+            elif isinstance(data, pd.Series):  # Convert Series to DataFrame
+                temp_df = series_to_df(data)
+            else:  # Handle non-DataFrame, non-Series types
+                temp_df = pd.DataFrame(data)
+            temp_df['Acorn'] = acorn
+            boxplot_dfs.append(temp_df)
+        boxplot_df = pd.concat(boxplot_dfs, ignore_index=True) if boxplot_dfs else pd.DataFrame()
+    # If acorn_data is already a DataFrame with an Acorn column
+    elif isinstance(acorn_data, pd.DataFrame) and 'Acorn' in acorn_data.columns:
+        boxplot_df = acorn_data.copy()
+    # If we just have the daily DataFrame
+    else:
+        boxplot_df = daily.copy()
+    
+    # Prepare data for outlier detection based on data structure
+    outlier_points = []
+    
+    # If acorn_data is a dictionary
+    if isinstance(acorn_data, dict):
+        for acorn, data in acorn_data.items():
+            if isinstance(data, pd.DataFrame):
+                temp_df = data.copy()
+            else:  # Series
+                temp_df = series_to_df(data)
+                
+            # Find the consumption column - it could be named Conso_kWh or something else
+            conso_col = 'Conso_kWh'
+            if conso_col not in temp_df.columns and len(temp_df.columns) > 0:
+                # Use the first numeric column as the consumption column
+                numeric_cols = temp_df.select_dtypes(include=[np.number]).columns
+                if len(numeric_cols) > 0:
+                    conso_col = numeric_cols[0]
+            
+            if conso_col in temp_df.columns:
+                outlier_idx = get_outlier_indices(temp_df[conso_col])
+                if len(outlier_idx) > 0:
+                    outlier_df = temp_df.loc[outlier_idx].copy()
+                    outlier_df['Acorn'] = acorn
+                    if 'Date' in outlier_df.columns:
+                        # Use helper function for reliable holiday checking
+                        outlier_df['IsHoliday'] = is_holiday(
+                            outlier_df['Date'], 
+                            bank_holiday_dates_set, 
+                            bank_holiday_dates_datetime
+                        )
+                    else:
+                        outlier_df['IsHoliday'] = False
+                    # Ensure Conso_kWh exists for plotting
+                    if conso_col != 'Conso_kWh':
+                        outlier_df['Conso_kWh'] = outlier_df[conso_col]
+                    outlier_points.append(outlier_df)
+    # If acorn_data is already a DataFrame with Acorn column
+    elif isinstance(acorn_data, pd.DataFrame) and 'Acorn' in acorn_data.columns:
+        for acorn in acorn_data['Acorn'].unique():
+            acorn_subset = acorn_data[acorn_data['Acorn'] == acorn].copy()
+            if 'Conso_kWh' in acorn_subset.columns:
+                outlier_idx = get_outlier_indices(acorn_subset['Conso_kWh'])
+                if len(outlier_idx) > 0:
+                    outlier_df = acorn_subset.loc[outlier_idx].copy()
+                    if 'Date' in outlier_df.columns:
+                        # Use helper function for reliable holiday checking
+                        outlier_df['IsHoliday'] = is_holiday(
+                            outlier_df['Date'], 
+                            bank_holiday_dates_set, 
+                            bank_holiday_dates_datetime
+                        )
+                    else:
+                        outlier_df['IsHoliday'] = False
+                    outlier_points.append(outlier_df)
+    # If we just have the daily DataFrame
+    else:
+        # Group by Acorn
+        for acorn in daily['Acorn'].unique():
+            acorn_subset = daily[daily['Acorn'] == acorn].copy()
+            outlier_idx = get_outlier_indices(acorn_subset['Conso_kWh'])
+            if len(outlier_idx) > 0:
+                outlier_df = acorn_subset.loc[outlier_idx].copy()
+                if 'Date' in outlier_df.columns:
+                    # Use helper function for reliable holiday checking
+                    outlier_df['IsHoliday'] = is_holiday(
+                        outlier_df['Date'], 
+                        bank_holiday_dates_set, 
+                        bank_holiday_dates_datetime
+                    )
+                else:
+                    outlier_df['IsHoliday'] = False
+                outlier_points.append(outlier_df)
+    
+    # Combine all outlier points
+    outlier_points_df = pd.concat(outlier_points) if outlier_points else pd.DataFrame(columns=['Acorn', 'Conso_kWh', 'IsHoliday'])
+    # Ensure boxplot_df has the necessary columns
+    if 'Conso_kWh' not in boxplot_df.columns and len(boxplot_df.columns) > 0:
+        # Find a suitable numeric column to use
+        numeric_cols = boxplot_df.select_dtypes(include=[np.number]).columns
+        if len(numeric_cols) > 0:
+            # Use the first numeric column and rename it
+            boxplot_df['Conso_kWh'] = boxplot_df[numeric_cols[0]]
+    
+    # Boxplot by Acorn
+    plt.figure(figsize=(8, 6))
+    sns.boxplot(x='Acorn', y='Conso_kWh', data=boxplot_df, showfliers=False)
+    
+    # Get unique Acorn values for positioning
+    unique_acorns = boxplot_df['Acorn'].unique()
+    acorn_positions = {acorn: idx for idx, acorn in enumerate(unique_acorns)}
+    
+    # Plot outliers
+    for acorn in unique_acorns:
+        acorn_outliers = outlier_points_df[outlier_points_df['Acorn'] == acorn]
+        if not acorn_outliers.empty:
+            x_pos = acorn_positions[acorn]
+            
+            # Create a color list based on IsHoliday - explicitly convert boolean to avoid issues
+            colors = ['red' if is_holiday else 'black' for is_holiday in acorn_outliers['IsHoliday']]
+            
+            # Print for debugging
+            holiday_count = sum(acorn_outliers['IsHoliday'])
+            if holiday_count > 0:
+                print(f"{acorn}: Found {holiday_count} holiday outliers out of {len(acorn_outliers)} total outliers")
+            
+            plt.scatter(
+                np.full(acorn_outliers.shape[0], x_pos),
+                acorn_outliers['Conso_kWh'],
+                c=colors,
+                s=40, zorder=5, label=None
+            )
+    plt.title("Distribution of Daily Consumption by Acorn Type\n(Red: Bank Holiday Outliers)")
+    plt.xlabel("Acorn Type")
+    plt.ylabel("Daily Consumption (kWh)")
+    plt.grid(axis='y')
+    plt.show()
+    
+    # Boxplots by Day of the Week
+    day_names = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+    
+    # Get unique Acorn values
+    unique_acorns = boxplot_df['Acorn'].unique()
+    
+    fig, axes = plt.subplots(1, len(unique_acorns), figsize=(20, 6), sharey=True)
+    # Handle single Acorn case
+    if len(unique_acorns) == 1:
+        axes = [axes]  # Wrap in list to make it iterable
+    
+    for ax, acorn in zip(axes, unique_acorns):
+        # Filter data for current acorn
+        df = boxplot_df[boxplot_df['Acorn'] == acorn].copy()
+        
+        # Add day of week if Date column exists
+        if 'Date' in df.columns:
+            # Ensure the Date column is datetime type
+            if not pd.api.types.is_datetime64_any_dtype(df['Date']):
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                except Exception as e:
+                    # If conversion fails, display error message
+                    print(f"Error converting Date column to datetime for {acorn}: {e}")
+                    ax.text(0.5, 0.5, f"Date column not in datetime format for {acorn}", 
+                           horizontalalignment='center', verticalalignment='center',
+                           transform=ax.transAxes, fontsize=12)
+                    continue
+                    
+            df['Day'] = df['Date'].dt.dayofweek.map(dict(enumerate(day_names)))
+            
+            # Create boxplot
+            sns.boxplot(x='Day', y='Conso_kWh', data=df, ax=ax, showfliers=False)
+            
+            # Add outliers with holiday highlighting
+            for i, day in enumerate(day_names):
+                day_data = df[df['Day'] == day]
+                if not day_data.empty:
+                    outlier_idx = get_outlier_indices(day_data['Conso_kWh'])
+                    if len(outlier_idx) > 0:
+                        outlier_df = day_data.loc[outlier_idx].copy()
+                        # Use helper function for reliable holiday checking
+                        outlier_df['IsHoliday'] = is_holiday(
+                            outlier_df['Date'], 
+                            bank_holiday_dates_set, 
+                            bank_holiday_dates_datetime
+                        )
+                        x_pos = [i] * len(outlier_df)
+                        ax.scatter(
+                            x_pos,
+                            outlier_df['Conso_kWh'],
+                            c=outlier_df['IsHoliday'].map({True: 'red', False: 'black'}),
+                            s=40, zorder=5
+                        )
+        else:
+            # If there's no Date column, we can't create this plot properly
+            ax.text(0.5, 0.5, f"No Date column in data for {acorn}", 
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=12)
+        
+        ax.set_title(f'{acorn} - by Day')
+        ax.set_xlabel('Day of the Week')
+        ax.set_ylabel('Consumption (kWh)')
+        ax.grid(axis='y')
+    
+    fig.suptitle('Daily Consumption Distribution by Day of the Week\n(Red: Bank Holiday Outliers)')
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+    
+    # Boxplots by Season
+    seasons = ['Winter', 'Spring', 'Summer', 'Autumn']
+    
+    # Get unique Acorn values
+    unique_acorns = boxplot_df['Acorn'].unique()
+    
+    fig, axes = plt.subplots(1, len(unique_acorns), figsize=(20, 6), sharey=True)
+    # Handle single Acorn case
+    if len(unique_acorns) == 1:
+        axes = [axes]  # Wrap in list to make it iterable
+    
+    for ax, acorn in zip(axes, unique_acorns):
+        # Filter data for current acorn
+        df = boxplot_df[boxplot_df['Acorn'] == acorn].copy()
+        
+        # Add season if Date column exists
+        if 'Date' in df.columns:
+            # Ensure the Date column is datetime type
+            if not pd.api.types.is_datetime64_any_dtype(df['Date']):
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                except Exception as e:
+                    # If conversion fails, display error message
+                    print(f"Error converting Date column to datetime for {acorn}: {e}")
+                    ax.text(0.5, 0.5, f"Date column not in datetime format for {acorn}", 
+                           horizontalalignment='center', verticalalignment='center',
+                           transform=ax.transAxes, fontsize=12)
+                    continue
+                    
+            df['Season'] = pd.cut(df['Date'].dt.month, bins=[0, 3, 6, 9, 12], labels=seasons, right=False)
+            
+            # Create boxplot
+            sns.boxplot(x='Season', y='Conso_kWh', data=df, ax=ax, showfliers=False)
+            
+            # Add outliers with holiday highlighting
+            for i, season in enumerate(seasons):
+                season_data = df[df['Season'] == season]
+                if not season_data.empty:
+                    outlier_idx = get_outlier_indices(season_data['Conso_kWh'])
+                    if len(outlier_idx) > 0:
+                        outlier_df = season_data.loc[outlier_idx].copy()
+                        # Use helper function for reliable holiday checking
+                        outlier_df['IsHoliday'] = is_holiday(
+                            outlier_df['Date'], 
+                            bank_holiday_dates_set, 
+                            bank_holiday_dates_datetime
+                        )
+                        x_pos = [i] * len(outlier_df)
+                        ax.scatter(
+                            x_pos,
+                            outlier_df['Conso_kWh'],
+                            c=outlier_df['IsHoliday'].map({True: 'red', False: 'black'}),
+                            s=40, zorder=5
+                        )
+        else:
+            # If there's no Date column, we can't create this plot properly
+            ax.text(0.5, 0.5, f"No Date column in data for {acorn}", 
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=12)
+        
+        ax.set_title(f'{acorn} - by Season')
+        ax.set_xlabel('Season')
+        ax.set_ylabel('Consumption (kWh)')
+        ax.grid(axis='y')
+    
+    fig.suptitle('Daily Consumption Distribution by Season\n(Red: Bank Holiday Outliers)')
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+    
+    # Boxplots by Month
+    month_labels = list(range(1, 13))
+    
+    # Get unique Acorn values
+    unique_acorns = boxplot_df['Acorn'].unique()
+    
+    fig, axes = plt.subplots(1, len(unique_acorns), figsize=(20, 6), sharey=True)
+    # Handle single Acorn case
+    if len(unique_acorns) == 1:
+        axes = [axes]  # Wrap in list to make it iterable
+    
+    for ax, acorn in zip(axes, unique_acorns):
+        # Filter data for current acorn
+        df = boxplot_df[boxplot_df['Acorn'] == acorn].copy()
+        
+        # Add month if Date column exists
+        if 'Date' in df.columns:
+            # Ensure the Date column is datetime type
+            if not pd.api.types.is_datetime64_any_dtype(df['Date']):
+                try:
+                    df['Date'] = pd.to_datetime(df['Date'])
+                except Exception as e:
+                    # If conversion fails, display error message
+                    print(f"Error converting Date column to datetime for {acorn}: {e}")
+                    ax.text(0.5, 0.5, f"Date column not in datetime format for {acorn}", 
+                           horizontalalignment='center', verticalalignment='center',
+                           transform=ax.transAxes, fontsize=12)
+                    continue
+                    
+            df['Month'] = df['Date'].dt.month
+            
+            # Create boxplot
+            sns.boxplot(x='Month', y='Conso_kWh', data=df, ax=ax, showfliers=False)
+            
+            # Add outliers with holiday highlighting
+            for i, month in enumerate(month_labels):
+                month_data = df[df['Month'] == month]
+                if not month_data.empty:
+                    outlier_idx = get_outlier_indices(month_data['Conso_kWh'])
+                    if len(outlier_idx) > 0:
+                        outlier_df = month_data.loc[outlier_idx].copy()
+                        # Use helper function for reliable holiday checking
+                        outlier_df['IsHoliday'] = is_holiday(
+                            outlier_df['Date'], 
+                            bank_holiday_dates_set, 
+                            bank_holiday_dates_datetime
+                        )
+                        x_pos = [i] * len(outlier_df)
+                        ax.scatter(
+                            x_pos,
+                            outlier_df['Conso_kWh'],
+                            c=outlier_df['IsHoliday'].map({True: 'red', False: 'black'}),
+                            s=40, zorder=5
+                        )
+        else:
+            # If there's no Date column, we can't create this plot properly
+            ax.text(0.5, 0.5, f"No Date column in data for {acorn}", 
+                   horizontalalignment='center', verticalalignment='center',
+                   transform=ax.transAxes, fontsize=12)
+        
+        ax.set_title(f'{acorn} - by Month')
+        ax.set_xlabel('Month')
+        ax.set_ylabel('Consumption (kWh)')
+        ax.grid(axis='y')
+    
+    fig.suptitle('Daily Consumption Distribution by Month\n(Red: Bank Holiday Outliers)')
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    plt.show()
+# ############################################################################################################
 
 # Global constants
 DAY_ORDER = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
