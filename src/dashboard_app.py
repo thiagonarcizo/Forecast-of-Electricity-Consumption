@@ -7,8 +7,6 @@ st.set_page_config(
 
 st.title("⚡ Forecast of Electricity Consumption")
 
-st.sidebar.success("Select a page above.")
-
 st.markdown(
     """
     This project aims to forecast electricity consumption.

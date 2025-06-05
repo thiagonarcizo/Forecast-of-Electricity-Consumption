@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import os
 
-from pages.streamlit_helpers import *
+from streamlit_helpers import *
 
 st.set_page_config(
     page_title="EDA",
