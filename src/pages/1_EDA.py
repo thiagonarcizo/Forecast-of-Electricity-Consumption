@@ -14,7 +14,7 @@ st.set_page_config(
 
 st.title("📊 Exploratory Data Analysis")
 
-st.markdown("This page contains the Exploratory Data Analysis of the project.")
+st.markdown("This page contains the EDA of the project.")
 
 # Load data
 data = load_all_data()
@@ -41,6 +41,18 @@ else:
 
     # Display plots
     st.header(f"Analysis for Acorn Group(s): {', '.join(acorn_selection)}")
+
+    st.markdown('''
+                ### Interpretation:
+                - The heatmap shows the consumption of the selected Acorn groups by day of the week.
+                - The load duration curve shows the consumption of the selected Acorn groups by time of the day.
+                - The seasonal analysis shows the consumption of the selected Acorn groups by season.
+                - The seasonal summary shows the consumption of the selected Acorn groups by season.
+                - The daily, weekly, monthly, and seasonal consumption shows the consumption of the selected Acorn groups by day, week, month, and season.
+                - The outlier boxplots shows the consumption of the selected Acorn groups by outlier.
+                - The holiday analysis shows the consumption of the selected Acorn groups by holiday.
+                - The external influence (forecast) shows the correlation between the consumption of the selected Acorn groups and the weather data.
+                ''')
 
     st.subheader("Consumption Heatmap")
     day_order = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
