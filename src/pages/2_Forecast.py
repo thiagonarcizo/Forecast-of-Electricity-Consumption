@@ -63,7 +63,7 @@ with med_term_tab:
         - ACORN F showed best performance with 1.18% MAPE
     """)
 
-    st.head("Visualization")
+    st.header("Visualization")
 
     with col2:
         st.subheader("LSTM Forecast") 
