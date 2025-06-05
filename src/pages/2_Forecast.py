@@ -65,12 +65,11 @@ with med_term_tab:
         - Low MAPE (<2%) indicating high accuracy
         - ACORN F showed best performance with 1.18% MAPE
     """)
-
-        st.image("src/img/plot1lgb.png")
         st.image("src/img/plot3lgb.png")
 
         st.header("Static Forecast vs. Rolling Forecast")
-        st.markdown("""
+        
+        st.markdown('''
         ## Static Forecast
 
         ### Building the Future Dataset
@@ -106,12 +105,12 @@ with med_term_tab:
         - Run the pre-trained model to predict that day's consumption.
         - Append the new prediction to the consumption history for future lag calculations.
         - Record the date and predicted value for later analysis.
-        """)
+        ''')
 
         st.image("src/img/plot2lgb.png")
 
-        st.markdown("""
-                    ## Comparison
+        st.markdown('''
+        ## Comparison
         - Static Forecast
             - Uses the same set of historical features for every day in the horizon.
             - Lag and trend inputs remain constant, ignoring how actual or predicted usage evolves.
@@ -122,7 +121,7 @@ with med_term_tab:
             - Mimics real-world deployment—only past values (including new forecasts) inform each next prediction.
 
 **Because the rolling approach continually incorporates the most recent information and adjusts forecasts dynamically, it typically yields more accurate and realistic results than a static projection.**
-                    """)
+                    ''')
 
     with model_tab2:
         st.subheader("LSTM Forecast") 
