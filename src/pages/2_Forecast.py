@@ -15,9 +15,81 @@ short_term_tab, med_term_tab = st.tabs(["Short Term", "Medium Term"])
 
 with short_term_tab:
     st.header("Short Term Forecast")
-    st.markdown("This section will be populated with the short term forecast, based on the `03_modelisation_court_terme_b.ipynb`, `model_daily.ipynb` and `model2_daily.ipynb` notebooks.")
-    st.markdown("Please provide the relevant code snippets or a summary of the models from the notebooks to proceed.")
-    # To be filled with Short Term Forecast content
+    col1, col2 = st.columns(2)
+
+    model_st_tab1, model_st_tab2 = st.tabs(["KNearestNeighbors Model", "RandomForest Model"])
+    with model_st_tab1:
+      st.markdown("""
+## Per‐ACORN Short‐Term Load Forecasting (KNN)
+
+### 1. Data Split by ACORN
+- **Sort & index**  
+  - Sort half‐hourly data by `Acorn` and `DateTime`.  
+  - Assign a within‐group index (`group_idx`) for each ACORN.
+
+- **48‐hour test horizon**  
+  - For each ACORN, let _N₁_ = total rows in that group.  
+  - Mark the final 96 rows (`group_idx ≥ Nᵢ − 96`) as test (48 hours), and the rest as train.
+
+### 2. Preprocessing & Pipeline (per ACORN)
+- **Features**  
+  - Numeric:  
+    ```
+    visibility, windBearing, temperature, dewPoint, pressure, windSpeed, humidity,
+    nb_clients, hour, dayofweek, month, dayofyear, is_holiday
+    ```  
+  - Categorical:  
+    ```
+    precipType, icon
+    ```
+
+- **Pipeline Steps**  
+  1. **StandardScaler** on all numeric features.  
+  2. **OneHotEncoder** on each categorical feature.  
+  3. **KNeighborsRegressor** (hyperparameters tuned per ACORN).
+
+### 3. Hyperparameter Tuning with Optuna (per ACORN)
+- **Search Space**  
+  - `algorithm`: auto, ball_tree, kd_tree, brute  
+  - `metric`: euclidean, manhattan, chebyshev, minkowski  
+    - If metric = minkowski, then _p_ ∈ {1, 2}  
+  - `n_neighbors`: integer from 1 to 100  
+  - `weights`: uniform, distance  
+  - `leaf_size`: integer from 10 to 60
+
+- **Tuning Process**  
+  1. For each trial, instantiate a KNN regressor with the sampled hyperparameters.  
+  2. Perform 3‐fold time‐series cross‐validation on the ACORN’s training subset.  
+  3. Optimize average RMSE (root mean squared error) across folds.
+
+- **Outcome**  
+  - **Best Hyperparameters** (per ACORN)  
+  - **Cross‐Validated RMSE**
+
+### 4. Final Training & Evaluation (per ACORN)
+1. **Retrain** on all train rows with the selected hyperparameters.  
+2. **Predict** consumption over the final 48 hours (test set).  
+3. **Compute Metrics**  
+   - **RMSE**: $\sqrt{\frac{1}{n}\sum(y_{\text{true}} - y_{\text{pred}})^2}$  
+   - **MAE**: $\frac{1}{n}\sum \lvert y_{\text{true}} - y_{\text{pred}}\rvert$  
+   - **MAPE**: $\frac{100\%}{n}\sum \left\lvert\frac{y_{\text{true}} - y_{\text{pred}}}{y_{\text{true}}}\right\rvert$
+
+### 5. Feature Importance (Permutation, per ACORN)
+- **Procedure**  
+  1. Permute each feature in the test subset and measure increase in RMSE.
+  2. Remove columns with negative importance because they might harm the result (`visibility` feature)
+                  
+### Results 
+  """)
+    metrics_df = pd.DataFrame({
+            'ACORN': ['C', 'P', 'F'],
+            'MAE': [0.0410, 0.0337, 0.0370],
+            'MAPE (%)': [30.8348, 30.8438, 30.8438], 
+            'RMSE': [0.0512, 0.0596, 0.0448]
+        })
+    st.image("src/img/plot1knn.png")
+
+    st.markdown("After such bad results, this model was discarded as an option")
 
 with med_term_tab:
     st.header("Medium Term Forecast")
