@@ -66,7 +66,7 @@ with med_term_tab:
         - ACORN F showed best performance with 1.18% MAPE
     """)
 
-        st.image("img/plot1lgb.png")
+        st.image("src/img/plot1lgb.png")
 
     with model_tab2:
         st.subheader("LSTM Forecast") 
