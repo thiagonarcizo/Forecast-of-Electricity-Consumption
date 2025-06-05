@@ -1,9 +1,14 @@
 import streamlit as st
-from streamlit_helpers import *
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
+
+current_path = os.getcwd()
+root_path = os.path.abspath(os.path.join(current_path, '..'))
+os.chdir(root_path)
+
+from streamlit_helpers import *
 
 st.set_page_config(
     page_title="EDA",
