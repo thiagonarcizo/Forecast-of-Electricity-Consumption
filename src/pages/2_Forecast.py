@@ -22,12 +22,14 @@ with med_term_tab:
     st.header("Medium Term Forecast")
     col1, col2 = st.columns(2)
 
-    with col1:
+    model_tab1, model_tab2 = st.tabs(["LightGBM Model", "LSTM Model"])
+    
+    with model_tab1:
         st.subheader("LightGBM Forecast")
         st.markdown("30-day forecast using LightGBM model")
         
         metrics_df = pd.DataFrame({
-            'ACORN Group': ['C', 'P', 'F'],
+            'ACORN': ['C', 'P', 'F'],
             'MAE': [0.2227, 0.0997, 0.1152],
             'MAPE (%)': [1.73, 1.49, 1.18], 
             'MSE': [0.1095, 0.0166, 0.0211],
@@ -65,6 +67,6 @@ with med_term_tab:
 
         st.header("Visualization")
 
-    with col2:
+    with model_tab2:
         st.subheader("LSTM Forecast") 
         st.markdown("30-day forecast using LSTM model")
