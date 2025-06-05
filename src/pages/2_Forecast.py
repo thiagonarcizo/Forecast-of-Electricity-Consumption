@@ -69,43 +69,45 @@ with med_term_tab:
 
         st.header("Static Forecast vs. Rolling Forecast")
 
-        st.markdown('''
-    ## Static Forecast
+        st.markdown("""
+## Static Forecast
 
-    *Building the Future Dataset*
-	- Create one row per day between the start and end dates.
-	- Extract simple date features (weekday, month, day of year).
-	- Encode cyclical patterns (weekday, month, day of year) using sine/cosine.
-	- Add flags for weekend, month start, and month end.
-	- Estimate winter weather metrics by drawing around historical winter averages.
-	- Compute combined weather measures when possible (e.g., temperature x humidity, temperature range).
-	- Fix client count to its historical average if available.
-	- Initialize a placeholder consumption value from the recent historical average.
-                    
-    ## Rolling Forecast
-                    
-    *Computing Lag and Rolling Metrics*
-    - Maintain a chronological list of past consumption values (historical + any prior predictions).
-    - For lagged values:
-        - Extract the consumption from 1, 2, 3, 7, 14, 21, and 28 days ago (or use the earliest available if not enough history).
-    - For rolling windows:
-        - For window lengths of 3, 7, 14, 21, and 30 days:
+*Building the Future Dataset*
+- Create one row per day between the start and end dates.
+- Extract simple date features (weekday, month, day of year).
+- Encode cyclical patterns (weekday, month, day of year) using sine/cosine.
+- Add flags for weekend, month start, and month end.
+- Estimate winter weather metrics by drawing around historical winter averages.
+- Compute combined weather measures when possible (e.g., temperature x humidity, temperature range).
+- Fix client count to its historical average if available.
+- Initialize a placeholder consumption value from the recent historical average.
+""")
+
+        st.markdown("""
+## Rolling Forecast
+
+*Computing Lag and Rolling Metrics*
+- Maintain a chronological list of past consumption values (historical + any prior predictions).
+- For lagged values:
+  - Extract the consumption from 1, 2, 3, 7, 14, 21, and 28 days ago (or use the earliest available if not enough history).
+- For rolling windows:
+  - For window lengths of 3, 7, 14, 21, and 30 days:
     - Calculate mean, standard deviation, minimum, and maximum over the most recent values (or all available data if the window exceeds history length).
-    - For exponential moving averages:
-     - Compute an exponential average with smoothing factors (e.g., 0.1, 0.3, 0.5) over the entire historical series.
+- For exponential moving averages:
+  - Compute an exponential average with smoothing factors (e.g., 0.1, 0.3, 0.5) over the entire historical series.
 
-    *Iterative Day-by-Day Prediction*
-    - Announce the start and end dates for the rolling forecast.
-    - Initialize the consumption history list from sorted historical data.
-    - For each date in the forecast horizon:
-    - Build that day's base features (calendar + weather estimates + client count).
-     - Compute lag and rolling features using the current consumption history.
-    - Merge base and lag/rolling features into a single feature set.
-    - Ensure all model inputs are present, filling any missing ones with zero.
-    - Run the pre-trained model to predict that day's consumption.
-    - Append the new prediction to the consumption history for future lag calculations.
-    - Record the date and predicted value for later analysis.
-        ''')
+*Iterative Day-by-Day Prediction*
+- Announce the start and end dates for the rolling forecast.
+- Initialize the consumption history list from sorted historical data.
+- For each date in the forecast horizon:
+  - Build that day's base features (calendar + weather estimates + client count).
+  - Compute lag and rolling features using the current consumption history.
+  - Merge base and lag/rolling features into a single feature set.
+  - Ensure all model inputs are present, filling any missing ones with zero.
+  - Run the pre-trained model to predict that day's consumption.
+  - Append the new prediction to the consumption history for future lag calculations.
+  - Record the date and predicted value for later analysis.
+""")
 
         st.image("src/img/plot2lgb.png")
 
