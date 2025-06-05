@@ -111,20 +111,20 @@ with med_term_tab:
 
         st.image("src/img/plot2lgb.png")
 
-        st.markdown('''
-    ## Comparison
-                    
-    - Static Forecast
-        - Uses the same set of historical features for every day in the horizon.
-        - Lag and trend inputs remain constant, ignoring how actual or predicted usage evolves.
-        - May drift if underlying patterns shift mid-horizon.
-	- Rolling Forecast
-        - Updates lag, rolling, and exponential-averaged features each day using prior predictions.
-        - Reflects the latest trends, adapting to sudden changes or emerging patterns.
-        - Mimics real-world deployment—only past values (including new forecasts) inform each next prediction.
+        st.markdown("""
+## Comparison
+
+- **Static Forecast**
+  - Uses the same set of historical features for every day in the horizon.
+  - Lag and trend inputs remain constant, ignoring how actual or predicted usage evolves.
+  - May drift if underlying patterns shift mid-horizon.
+- **Rolling Forecast**
+  - Updates lag, rolling, and exponential-averaged features each day using prior predictions.
+  - Reflects the latest trends, adapting to sudden changes or emerging patterns.
+  - Mimics real-world deployment—only past values (including new forecasts) inform each next prediction.
 
 **Because the rolling approach continually incorporates the most recent information and adjusts forecasts dynamically, it typically yields more accurate and realistic results than a static projection.**
-                    ''')
+""")
 
     with model_tab2:
         st.subheader("LSTM Forecast") 
