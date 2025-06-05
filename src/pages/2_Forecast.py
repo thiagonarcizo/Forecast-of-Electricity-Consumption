@@ -113,6 +113,7 @@ with med_term_tab:
 
         st.markdown('''
     ## Comparison
+                    
     - Static Forecast
         - Uses the same set of historical features for every day in the horizon.
         - Lag and trend inputs remain constant, ignoring how actual or predicted usage evolves.
