@@ -1,5 +1,6 @@
 import streamlit as st
 import pandas as pd
+import matplotlib.pyplot as plt
 
 st.set_page_config(
     page_title="Forecast",
@@ -65,7 +66,7 @@ with med_term_tab:
         - ACORN F showed best performance with 1.18% MAPE
     """)
 
-        st.header("Visualization")
+        st.image("img/plot1lgb.png")
 
     with model_tab2:
         st.subheader("LSTM Forecast") 
