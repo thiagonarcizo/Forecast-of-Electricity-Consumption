@@ -45,13 +45,11 @@ else:
     st.markdown('''
                 ### Interpretation:
                 - The heatmap shows the consumption of the selected Acorn groups by day of the week.
-                - The load duration curve shows the consumption of the selected Acorn groups by time of the day.
+                - The load duration curve shows the percentage of time that the consumption of the selected Acorn groups is above a certain value.
                 - The seasonal analysis shows the consumption of the selected Acorn groups by season.
                 - The seasonal summary shows the consumption of the selected Acorn groups by season.
                 - The daily, weekly, monthly, and seasonal consumption shows the consumption of the selected Acorn groups by day, week, month, and season.
                 - The outlier boxplots shows the consumption of the selected Acorn groups by outlier.
-                - The holiday analysis shows the consumption of the selected Acorn groups by holiday.
-                - The external influence (forecast) shows the correlation between the consumption of the selected Acorn groups and the weather data.
                 ''')
 
     st.subheader("Consumption Heatmap")
