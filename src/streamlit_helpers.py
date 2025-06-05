@@ -109,6 +109,8 @@ def create_boxplot_by_acorn(data, y_col='Conso_moy', title_prefix='', figsize=(1
 def create_heatmap_by_acorn(data, acorn_groups, day_order, figsize=(20, 6)):
     """Create heatmaps for each Acorn group showing hour vs day patterns"""
     fig, axes = plt.subplots(1, len(acorn_groups), figsize=figsize)
+    if len(acorn_groups) == 1:
+        axes = [axes]
     
     # Calculate global min and max for consistent color scale
     all_means = []
@@ -142,6 +144,8 @@ def create_heatmap_by_acorn(data, acorn_groups, day_order, figsize=(20, 6)):
 def create_load_duration_curves(data, acorn_groups, figsize=(18, 6)):
     """Create load duration curves for each Acorn group"""
     fig, axes = plt.subplots(1, len(acorn_groups), figsize=figsize)
+    if len(acorn_groups) == 1:
+        axes = [axes]
     
     for idx, acorn_group in enumerate(acorn_groups):
         # Filter data for current Acorn group
@@ -169,22 +173,27 @@ def create_temporal_boxplots(data, acorn_groups, day_order, figsize=(20, 12)):
     
     for idx, acorn_group in enumerate(acorn_groups):
         acorn_data = data[data['Acorn'] == acorn_group]
+
+        if len(acorn_groups) == 1:
+            ax_h, ax_d = axes[0], axes[1]
+        else:
+            ax_h, ax_d = axes[0, idx], axes[1, idx]
         
         # Hour boxplot
-        sns.boxplot(x='Hour', y='Conso_moy', data=acorn_data, ax=axes[0, idx], 
+        sns.boxplot(x='Hour', y='Conso_moy', data=acorn_data, ax=ax_h, 
                    hue='Hour', palette='viridis', legend=False)
-        axes[0, idx].set_title(f'Consumption by Hour - {acorn_group}')
-        axes[0, idx].set_xlabel('Hour of Day')
-        axes[0, idx].set_ylabel('Consumption (kWh)')
-        axes[0, idx].tick_params(axis='x', rotation=45)
+        ax_h.set_title(f'Consumption by Hour - {acorn_group}')
+        ax_h.set_xlabel('Hour of Day')
+        ax_h.set_ylabel('Consumption (kWh)')
+        ax_h.tick_params(axis='x', rotation=45)
         
         # Day of week boxplot
-        sns.boxplot(x='Day', y='Conso_moy', data=acorn_data, ax=axes[1, idx], 
+        sns.boxplot(x='Day', y='Conso_moy', data=acorn_data, ax=ax_d, 
                    order=day_order, hue='Day', palette='Set2', legend=False)
-        axes[1, idx].set_title(f'Consumption by Day - {acorn_group}')
-        axes[1, idx].set_xlabel('Day of Week')
-        axes[1, idx].set_ylabel('Consumption (kWh)')
-        axes[1, idx].tick_params(axis='x', rotation=45)
+        ax_d.set_title(f'Consumption by Day - {acorn_group}')
+        ax_d.set_xlabel('Day of Week')
+        ax_d.set_ylabel('Consumption (kWh)')
+        ax_d.tick_params(axis='x', rotation=45)
     
     return fig
 
@@ -305,6 +314,8 @@ def plot_daily_acorn_consumption(daily, uk_bank_holidays, acorn_types=None):
     # By weekday and season
     seasons = ['Winter', 'Spring', 'Summer', 'Autumn']
     fig3, axes = plt.subplots(1, len(acorn_data), figsize=(20, 6), sharey=True)
+    if len(acorn_data) == 1:
+        axes = [axes]
     for ax, (acorn, data) in zip(axes, acorn_data.items()):
         data = data.copy()
         data['Season'] = pd.cut(data['Date'].dt.month, bins=[0, 3, 6, 9, 12], labels=seasons, right=False)
@@ -858,6 +869,28 @@ def plot_daily_acorn_outlier_boxplots(daily, acorn_data=None, uk_bank_holidays=N
         ax.grid(axis='y')
         
     return fig1, fig2, fig3, fig4
+
+def merge_daily_consumption_weather(consumption_daily, weather_daily, consumption_date_col='Date', weather_date_col='Date'):
+    """
+    Merges daily consumption and weather DataFrames on the date, using fix_weather_daily_date for robust handling.
+    """
+    # Prepare consumption data
+    df_conso = consumption_daily.copy()
+    if consumption_date_col not in df_conso.columns:
+        # Try to find a date-like column
+        for col in df_conso.columns:
+            if 'date' in col.lower():
+                df_conso['Date'] = pd.to_datetime(df_conso[col]).dt.date
+                break
+        else:
+            raise ValueError("No date column found in consumption_daily DataFrame.")
+    else:
+        df_conso['Date'] = pd.to_datetime(df_conso[consumption_date_col]).dt.date
+    # Prepare weather data
+    df_weather = fix_weather_daily_date(weather_daily)
+    # Merge
+    merged = pd.merge(df_conso, df_weather, left_on='Date', right_on='Date', how='inner')
+    return merged
 
 # ############################################################################################################
 
