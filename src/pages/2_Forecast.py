@@ -72,7 +72,7 @@ with med_term_tab:
         st.markdown("""
 ## Static Forecast
 
-*Building the Future Dataset*
+### Building the Future Dataset
 - Create one row per day between the start and end dates.
 - Extract simple date features (weekday, month, day of year).
 - Encode cyclical patterns (weekday, month, day of year) using sine/cosine.
@@ -86,7 +86,7 @@ with med_term_tab:
         st.markdown("""
 ## Rolling Forecast
 
-*Computing Lag and Rolling Metrics*
+### Computing Lag and Rolling Metrics
 - Maintain a chronological list of past consumption values (historical + any prior predictions).
 - For lagged values:
   - Extract the consumption from 1, 2, 3, 7, 14, 21, and 28 days ago (or use the earliest available if not enough history).
@@ -96,7 +96,7 @@ with med_term_tab:
 - For exponential moving averages:
   - Compute an exponential average with smoothing factors (e.g., 0.1, 0.3, 0.5) over the entire historical series.
 
-*Iterative Day-by-Day Prediction*
+### Iterative Day-by-Day Prediction
 - Announce the start and end dates for the rolling forecast.
 - Initialize the consumption history list from sorted historical data.
 - For each date in the forecast horizon:
