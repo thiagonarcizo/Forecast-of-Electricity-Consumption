@@ -20,8 +20,6 @@ with short_term_tab:
     model_st_tab1, model_st_tab2 = st.tabs(["KNearestNeighbors Model", "RandomForest Model"])
     with model_st_tab1:
         st.markdown("""
-## Per‐ACORN Short‐Term Load Forecasting (KNN)
-
 ### 1. Data Split by ACORN
 - **Sort & index**  
   - Sort half‐hourly data by `Acorn` and `DateTime`.  
@@ -79,17 +77,97 @@ with short_term_tab:
   1. Permute each feature in the test subset and measure increase in RMSE.
   2. Remove columns with negative importance because they might harm the result (`visibility` feature)
                   
-### Results 
+### Results for test set
   """   )
-        metrics_df = pd.DataFrame({
+        metrics_knn_df = pd.DataFrame({
                 'ACORN': ['C', 'P', 'F'],
                 'MAE': [0.0410, 0.0337, 0.0370],
                 'MAPE (%)': [30.8348, 30.8438, 30.8438], 
                 'RMSE': [0.0512, 0.0596, 0.0448]
             })
+        
+        st.dataframe(metrics_knn_df)
+
         st.image("src/img/plot1knn.png")
 
         st.markdown("After such bad results, this model was discarded as an option")
+    
+    
+    with model_st_tab2:
+        st.markdown(
+            """
+## Per‐ACORN Short‐Term Load Forecasting (Random Forest)
+
+### 1. Data Split by ACORN
+- **Sort & index**  
+  - Sort half‐hourly data by `Acorn` and `DateTime`.  
+  - Assign a within‐group index (`group_idx`) for each ACORN.
+
+- **48‐hour test horizon**  
+  - For each ACORN, let _Nᵢ_ = total rows in that group.  
+  - Mark the final 96 rows (`group_idx ≥ Nᵢ − 96`) as test (48 hours), and the rest as train.
+
+### 2. Preprocessing & Pipeline (per ACORN)
+- **Features**  
+  - Numeric:  
+    ```
+    visibility, windBearing, temperature, dewPoint, pressure, windSpeed, humidity,
+    nb_clients, hour, dayofweek, month, dayofyear, is_holiday
+    ```  
+  - Categorical:  
+    ```
+    precipType, icon
+    ```
+
+- **Pipeline Steps**  
+  1. **StandardScaler** on all numeric features.  
+  2. **OneHotEncoder** on each categorical feature.  
+  3. **RandomForestRegressor** (hyperparameters tuned per ACORN).
+
+### 3. Hyperparameter Tuning with Optuna (per ACORN)
+- **Search Space**  
+  - `n_estimators`: integer from 50 to 300  
+  - `max_depth`: integer from 5 to 30  
+  - `min_samples_split`: integer from 2 to 20  
+  - `min_samples_leaf`: integer from 1 to 10  
+  - `max_features`: choice of {“sqrt”, “log2”, None}
+
+- **Tuning Process**  
+  1. For each trial, instantiate a Random Forest with the sampled hyperparameters.  
+  2. Perform 3‐fold time‐series cross‐validation on the ACORN’s training subset.  
+  3. Optimize average RMSE (root mean squared error) across folds.
+
+- **Outcome**  
+  - **Best Hyperparameters** (per ACORN)  
+  - **Cross‐Validated RMSE**
+
+### 4. Final Training & Evaluation (per ACORN)
+1. **Retrain** on all train rows with the selected hyperparameters.  
+2. **Predict** consumption over the final 48 hours (test set).  
+3. **Compute Metrics**  
+   - **RMSE**: \(\sqrt{\frac{1}{n}\sum(y_{\text{true}} - y_{\text{pred}})^2}\)  
+   - **MAE**: \(\frac{1}{n}\sum |y_{\text{true}} - y_{\text{pred}}|\)  
+   - **MAPE**: \(\frac{100\%}{n}\sum \left|\frac{y_{\text{true}} - y_{\text{pred}}}{y_{\text{true}}}\right|\)
+
+### Results for the test set
+"""
+        )
+
+        metrics_rf_df = pd.DataFrame({
+                'ACORN': ['C', 'P', 'F'],
+                'MAE': [0.0185, 0.0151, 0.0127],
+                'MAPE (%)': [1.8498, 1.5087, 1.2724], 
+                'RMSE': [0.0274, 0.0201, 0.0164]
+        })
+        st.dataframe(metrics_rf_df)
+        st.image("src/img/plotrf1.png")
+        st.image("src/img/plotrf2.png")
+        st.image("src/img/plotrf3.png")
+        st.markdown(
+            """
+
+"""
+        )
 
 
 
