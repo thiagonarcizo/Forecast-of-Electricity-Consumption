@@ -26,17 +26,17 @@ with med_term_tab:
         st.subheader("LightGBM Forecast")
         st.markdown("30-day forecast using LightGBM model")
         
-    metrics_df = pd.DataFrame({
-        'ACORN Group': ['C', 'P', 'F'],
-        'MAE': [0.2227, 0.0997, 0.1152],
-        'MAPE (%)': [1.73, 1.49, 1.18], 
-        'MSE': [0.1095, 0.0166, 0.0211],
-        'R² Score': [0.9444, 0.9758, 0.9790]
-    })
+        metrics_df = pd.DataFrame({
+            'ACORN Group': ['C', 'P', 'F'],
+            'MAE': [0.2227, 0.0997, 0.1152],
+            'MAPE (%)': [1.73, 1.49, 1.18], 
+            'MSE': [0.1095, 0.0166, 0.0211],
+            'R² Score': [0.9444, 0.9758, 0.9790]
+        })
     
-    st.dataframe(metrics_df)
+        st.dataframe(metrics_df)
     
-    st.markdown("""
+        st.markdown("""
     The LightGBM model was trained with the following approach:
     
     1. **Data Preparation**:
@@ -63,7 +63,7 @@ with med_term_tab:
         - ACORN F showed best performance with 1.18% MAPE
     """)
 
-    st.header("Visualization")
+        st.header("Visualization")
 
     with col2:
         st.subheader("LSTM Forecast") 
