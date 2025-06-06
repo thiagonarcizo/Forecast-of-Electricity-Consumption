@@ -190,7 +190,7 @@ with med_term_tab:
     st.header("Medium Term Forecast")
     col1, col2 = st.columns(2)
 
-    model_tab1, model_tab2 = st.tabs(["LightGBM Model", "LSTM Model"])
+    model_tab1, model_tab2, model_tab3, model_tab4, model_tab5 = st.tabs(["LightGBM Model", "LSTM Model", "SARIMAX Model", "MLP Model", "SVM Model"])
     
     with model_tab1:
         st.subheader("LightGBM Forecast")
@@ -301,3 +301,14 @@ with med_term_tab:
     with model_tab2:
         st.subheader("LSTM Forecast") 
         st.markdown("30-day forecast using LSTM model")
+
+    with model_tab3:
+        st.subheader("SARIMAX")
+        st.markdown("30-day forecast using Prophet model")
+
+    with model_tab4:
+        st.subheader("MLP")
+        st.markdown("30-day forecast using MLP model")
+
+    with model_tab5:
+        st.subheader("SVM")
