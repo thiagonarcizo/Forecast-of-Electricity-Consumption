@@ -1,6 +1,6 @@
 # Forecast of Electricity Consumption
 
-This repository contains the coursework for the **EI-ST4** project. The objective is to forecast UK household electricity usage with models tailored to different customer segments (ACORN categories). Results are showcased through an interactive Streamlit application.
+This repository contains the coursework for the **EI-ST4** project. The objective is to forecast UK household electricity usage with models tailored to different customer segments (ACORN categories). Results are showcased through an interactive Streamlit application composed of several pages.
 
 ## Project Phases
 1. **Analysis and characterisation** – Explore consumption data, quantify weather effects and identify temporal patterns such as seasonality and autocorrelation.
@@ -31,6 +31,17 @@ Install the dependencies listed in `requirements.txt` and start the Streamlit ap
 pip install -r requirements.txt
 streamlit run src/Introduction.py
 ```
+
+## Streamlit Pages
+The web interface is organised into the following sections:
+
+1. **Introduction** – project outline and objectives.
+2. **EDA** – exploratory analysis with interactive visualisations of the ACORN groups.
+3. **Forecast** – short- and medium-term prediction results with explanations of each modelling approach.
+4. **Dashboard** – compare historical and predicted daily consumption for any model.
+5. **Conclusion** – summary of findings and the rationale for the final modelling choices.
+
+The application ultimately selects **Random Forest** for short-term forecasting and a **rolling LSTM** strategy for medium-term forecasts as these models achieved the most reliable accuracy across the ACORN segments.
 
 ## Repository Structure
 - `src/` – Streamlit pages and helper modules
