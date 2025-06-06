@@ -84,15 +84,15 @@ else:
 ### **Remarks**
 
 1. **Weekend Effects**  
-   * Average consumption increases over weekends, especially for **ACORN-F** (**+5.8%**), followed by **ACORN-C** (**+4.11%**) and **ACORN-P** (**+2.4%**).  
+   * Average consumption **increases over weekends,** especially for **ACORN-F** (**+5.8%**), followed by **ACORN-C** (**+4.11%**) and **ACORN-P** (**+2.4%**).  
    * **Sundays** consistently show the **highest daily usage** across all groups.
 
 2. **Bank Holiday Patterns**  
-   * All groups show a local spike during **bank holidays**, but only **ACORN-C** shows a **notable jump** (**+10.7%**), compared to **+3.2%** for ACORN-F and **+1.6%** for ACORN-P.
+   * All groups show a **local spike** during **bank holidays**, but only **ACORN-C** shows a **notable jump** (**+10.7%**), compared to **+3.2%** for ACORN-F and **+1.6%** for ACORN-P.
 
 3. **Seasonal Trends**  
    * All groups reach **peak average consumption in winter** and **lowest in summer**.  
-   * **Spring** edges out **autumn** slightly in most groups.
+   * The average consumption on **spring** is **slightly higher** than on **autumn**.
 
 ---
 ''')
@@ -108,8 +108,8 @@ else:
 ### **Remarks (continued)**
 
 4. **Outliers**  
-   * Outliers are rare except around **Christmas for ACORN-C**.  
-   * Most occur in **summer months** and represent less than **4%** of the days.  
+   * Besides some bank holidays like Christmas for ACORN-C, there are **not many outliers.**  
+   * Most occur in **summer months** and represent **less than 4%** of the month's data.  
    * **July and October for ACORN-F** are exceptions, where **6.45%** of values are flagged as outliers.
 
 ---
