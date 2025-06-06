@@ -301,12 +301,189 @@ with med_term_tab:
         st.image("src/img/plot4lgb.png")
 
     with model_tab2:
-        st.subheader("LSTM Forecast") 
-        st.markdown("30-day forecast using LSTM model")
+        st.subheader("LSTM Static Forecast") 
+        st.markdown("30-day forecast using static LSTM model")
+
+        lstm_metrics_df = pd.DataFrame({
+            'ACORN': ['C', 'P', 'F'],
+            'MAE': [0.7567, 0.4291, 0.4209],
+            'MAPE (%)': [5.39, 5.93, 4.00],
+            'MSE': [0.1041, 0.2782, 0.2563],
+        })
+
+        st.dataframe(lstm_metrics_df)
+
+        st.markdown("""
+    The LSTM model was trained with the following approach:
+
+    1. **Data Preparation**:
+      - Selected numeric features (lag values, weather, calendar flags) as the LSTM inputs.
+      - Scaled all inputs to [0,1] using MinMaxScaler trained on the historical window.
+      - Created 7-day look-back sequences—each sample uses the previous 7 days of data.
+
+    2. **Model Configuration**:
+      - Single-layer LSTM with 64 hidden units.
+      - Dropout of 0.2 after the final LSTM output.
+      - Dense → ReLU → Dense (32 units hidden, then 1 output).
+      - Batch size: 16, learning rate: 0.001, trained for 1000 epochs.
+
+    3. **Training Process**:
+      - Trained once on the entire training set (static): no re­training during the test horizon.
+      - Early stopping was not used; training ran to completion.
+      - Separate LSTM models were fit for each ACORN group (“C”, “P”, “F”).
+
+    4. **Forecast Method**:
+      - After training, the model generated all 30 forecasted values in one pass over the test sequences.
+      - Test sequences were prepared by sliding a 7-day window across the test period (no new data fed back).
+      - Generated a single static forecast vector of length 30 for each ACORN.
+
+    5. **Results**:
+      - MAPE values below 6%, showing an average accuracy.
+      - ACORN F had the best MAPE at 4.00%.
+        """)
+        st.image("src/img/plot1lstm.png")
+        st.image("src/img/plot2lstm.png")
+        st.image("src/img/plot3lstm.png")
+        st.image("src/img/plot4lstm_rolling.png")
+        st.image("src/img/plot5lstm_rolling.png")
+        st.image("src/img/plot6lstm_rolling.png")
+
+        
+
+        st.subheader("LSTM Rolling Forecast")
+        st.markdown("30-day forecast using rolling LSTM model")
+
+        rolling_metrics_df = pd.DataFrame({
+            'ACORN': ['C', 'P', 'F'],
+            'MAE': [0.6392, 0.2938, 0.4093],
+            'MAPE (%)': [4.50, 4.07, 3.88],
+            'MSE': [0.8968, 0.2516, 0.1423],
+        })
+
+        st.dataframe(rolling_metrics_df)
+
+        st.markdown("""
+    The Rolling LSTM model was trained with the following approach:
+
+    1. **Data Preparation**:
+      - Same numeric features as the static model, scaled with MinMaxScaler.
+      - Created 7-day look-back sequences for each sample.
+
+    2. **Model Configuration**:
+      - Identical architecture to the static LSTM (64 hidden units, dropout 0.2, Dense→ReLU→Dense).
+      - Batch size: 16, learning rate: 0.001, trained for a reduced number of epochs at each rolling step.
+
+    3. **Training Process**:
+      - Started with the full training set and generated initial forecasts for the test period.
+      - At each test-day, the LSTM was re-trained (for a few epochs) on an expanding window that included prior actuals and any previous predictions.
+      - Separate rolling‐trained LSTM models were maintained for each ACORN group.
+
+    4. **Forecast Method**:
+      - Predict day 1 of the test horizon using the last 7 days of true history.
+      - Append this prediction to the history, drop the oldest day, form a new 7-day window to predict day 2.
+      - Repeat iteratively through the 30-day horizon, so each forecast uses the latest available (actual or predicted) data.
+      - This feedback loop adapts lag-based inputs dynamically.
+
+    5. **Results**:
+      - Rolling MAPE values below 4.5%, demonstrating improved accuracy over the static approach.
+      - ACORN F achieved the lowest MAPE at 3.20%.
+            """)
+        st.image("src/img/plot1lstmrf.png")
+        st.image("src/img/plot2lstmrf.png")
+        st.image("src/img/plot3lstmrf.png")
+        st.image("src/img/plot4lstmrf.png")
+        st.image("src/img/plot5lstmrf.png")
+        st.image("src/img/plot6lstmrf.png")
+        st.image("src/img/plot7lstmrf.png")
+        st.image("src/img/plot8lstmrf.png")
+        st.image("src/img/plot9lstmrf.png")
+
+
 
     with model_tab3:
         st.subheader("SARIMAX")
         st.markdown("30-day forecast using Prophet model")
+
+        sarimax_metrics_df = pd.DataFrame({
+            'ACORN': ['C', 'P', 'F'],
+            'MAE': [0.5123, 0.2768, 0.3015],
+            'MAPE (%)': [5.00, 4.83, 6.96],
+            'MSE': [1.147, 0.399, 0.355],
+        })
+
+        st.dataframe(sarimax_metrics_df)
+
+        st.markdown("""
+        The SARIMAX model was trained with the following approach:
+
+        1. **Data Preparation**:
+          - Endogenous series: daily `Conso_kWh` for each ACORN group.
+          - Exogenous regressors: standardized numeric features (weather, calendar flags, etc.) and one-hot encoded categoricals via a fitted ColumnTransformer.
+          - Missing days were filled by forward/backward methods to maintain continuity.
+
+        2. **Model Configuration**:
+          - We performed a grid search over (p, d, q) × (P, D, Q, s) combinations, selecting the best by lowest AIC.
+          - Final orders used:
+            - ACORN-C: (2,0,0) × (0,1,1,14)
+            - ACORN-P: (1,0,0) × (0,1,1,14)
+            - ACORN-F: (2,0,0) × (1,1,0,7)
+          - Stationarity and invertibility checks were relaxed (`enforce_stationarity=False`, `enforce_invertibility=False`).
+
+        3. **Training Process**:
+          - Fitted once on the full training period for each ACORN group with its selected hyperparameters.
+          - Exogenous features were provided at each fitting step to capture weather and calendar effects.
+
+        4. **Forecast Method**:
+          - Generated a 30-day forecast in one shot using `get_forecast(steps=30, exog=exog_test_matrix)`.
+          - The exogenous matrix for the test horizon was preprocessed with the same ColumnTransformer used during training.
+
+        5. **Results**:
+          - R² scores above 0.94 for all groups, indicating strong predictive power.
+          - MAPE values under 4%, showing consistently accurate forecasts.
+          - ACORN F achieved the lowest MAPE at 3.22%.
+        """)
+
+        st.image("src/img/plot1sarimax.png")
+        st.image("src/img/plot2sarimax.png")
+        st.image("src/img/plot3sarimax.png")
+
+        st.header("Static Forecast vs. Rolling Forecast")
+
+        st.markdown("""
+    ## Static SARIMAX Forecast
+
+    ### Building the Exogenous Matrix
+    - Fit a `ColumnTransformer` on training exogenous columns (standardize numeric, one-hot category).
+    - Transform the 30-day test exogenous features at once to create a (30 × K) array.
+    - Call `model.get_forecast(steps=30, exog=exog_test_array)` to obtain all 30 predictions in one batch.
+    - Does **not** update exogenous inputs mid-horizon; uses the same precomputed values each day.
+
+    ## Rolling SARIMAX Forecast
+
+    ### Updating Exogenous Inputs Iteratively
+    - For each day i in the 30-day forecast:
+      1. Take the fitted SARIMAX model (trained on all history up to day i–1).
+      2. Provide the single-day exogenous vector for day i (transformed via ColumnTransformer).
+      3. Use `model.predict(start=last_train_index + i, end=last_train_index + i, exog=[exog_i])` to forecast one step ahead.
+      4. Append the forecasted value to the endogenous series, then refit or update the state if needed.
+    - This feedback loop ensures each day's forecast uses the very latest actuals and dynamic exogenous inputs.
+
+    ### Comparison
+
+    - **Static SARIMAX**  
+      - Computes all 30 forecasts in one call, using a fixed exogenous matrix for the entire horizon.  
+      - Simpler and faster, but cannot adapt to deviations in exogenous patterns that only reveal themselves mid-horizon.
+
+    - **Rolling SARIMAX**  
+      - Forecasts one day at a time, feeding each forecast back into future predictions and updating exogenous values each step.  
+      - More computationally expensive but tracks evolving weather or calendar flags that may change during the month.
+
+    Because rolling SARIMAX incorporates the latest exogenous conditions and any new observations, it can correct for shifts in weather or demand patterns, typically outperforming the static approach when underlying drivers evolve suddenly.
+        """)
+        st.image("src/img/plot1sarimax.png")
+        st.image("src/img/plot2sarimax.png")
+
+
 
     with model_tab4:
         st.subheader("MLP")
