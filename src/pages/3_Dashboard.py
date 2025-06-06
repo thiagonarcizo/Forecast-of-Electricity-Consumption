@@ -45,7 +45,7 @@ st.sidebar.header("Filter Options")
 
 model_choice = st.sidebar.selectbox(
     "Choose a prediction model:",
-    ('LightGBM', 'LSTM'),
+    ('LSTM', 'LightGBM'),
     key="model_selector"
 )
 
