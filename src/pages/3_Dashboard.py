@@ -57,13 +57,25 @@ acorn_groups = st.sidebar.multiselect(
 min_date = df['Date'].min().date()
 max_date = df['Date'].max().date()
 
-start_date, end_date = st.sidebar.date_input(
+if st.sidebar.button("Select All Dates"):
+    st.session_state.date_range_selector = (min_date, max_date)
+    st.rerun()
+
+dates = st.sidebar.date_input(
     "Select Date Range:",
     value=(min_date, max_date),
     min_value=min_date,
     max_value=max_date,
     key='date_range_selector'
 )
+
+if isinstance(dates, tuple):
+    if len(dates) == 2:
+        start_date, end_date = dates
+    else:
+        start_date = end_date = dates[0]
+else:
+    start_date = end_date = dates
 
 df_selection = df[
     (df['Acorn'].isin(acorn_groups)) &
@@ -100,9 +112,9 @@ else:
         id_vars=['Date', 'Acorn'],
         value_vars=['Actual', 'Predicted'],
         var_name='Source',
-        value_name='Conso_kWh'
+        value_name='Consumption'
     )
-    df_plot.dropna(subset=['Conso_kWh'], inplace=True)
+    df_plot.dropna(subset=['Consumption'], inplace=True)
 
     fig = px.line(
         df_plot,
@@ -117,7 +129,24 @@ else:
     
     first_prediction_date = df_selection[df_selection['Predicted'].notna()]['Date'].min()
     if pd.notna(first_prediction_date) and first_prediction_date >= df_selection['Date'].min() and first_prediction_date <= df_selection['Date'].max():
-        fig.add_vline(x=first_prediction_date, line_width=2, line_dash="dash", line_color="green", annotation_text="Prediction Start")
+        fig.add_shape(
+            type="line",
+            x0=first_prediction_date,
+            y0=0,
+            x1=first_prediction_date,
+            y1=1,
+            yref="paper",
+            line=dict(color="green", width=2, dash="dash"),
+        )
+        fig.add_annotation(
+            x=first_prediction_date,
+            y=1.05,
+            yref="paper",
+            text="Prediction Start",
+            showarrow=False,
+            yshift=10,
+            font=dict(color="green")
+        )
 
     fig.update_layout(
         plot_bgcolor="rgba(0,0,0,0)",
@@ -142,8 +171,8 @@ else:
         st.plotly_chart(fig_bar, use_container_width=True)
 
     with col2:
-        st.dataframe(acorn_total.reset_index().rename(columns={'index': 'Acorn', 'Consumption': 'Total kWh'}))
+        st.dataframe(acorn_total.reset_index().rename(columns={'index': 'Acorn', 'Conso_kWh': 'Total kWh'}))
 
     with st.expander("View Raw Data for Selection"):
-        st.dataframe(df_selection.style.format({'Actual': '{:.2f}', 'Predicted': '{:.2f}', 'Consumption': '{:.2f}'}), use_container_width=True)
+        st.dataframe(df_selection.style.format({'Actual': '{:.2f}', 'Predicted': '{:.2f}', 'Conso_kWh': '{:.2f}'}), use_container_width=True)
 
