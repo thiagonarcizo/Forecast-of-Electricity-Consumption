@@ -53,7 +53,7 @@ actual_data_path = 'data/02_processed/csv/group_4_daily.csv'
 if model_choice == 'LightGBM':
     predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lightgbm.csv'
 elif model_choice == 'LSTM':
-    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lstm.csv'
+    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lstmRF.csv'
 elif model_choice == 'MLP':
     predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_mlp.csv'
 elif model_choice == 'SVM':
