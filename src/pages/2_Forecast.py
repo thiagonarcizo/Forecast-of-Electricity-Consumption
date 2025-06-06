@@ -1,6 +1,7 @@
 import streamlit as st
 import pandas as pd
 import matplotlib.pyplot as plt
+import numpy as np
 
 st.set_page_config(
     page_title="Forecast",
@@ -202,7 +203,7 @@ with med_term_tab:
             'ACORN': ['C', 'P', 'F'],
             'MAE': [0.2227, 0.0997, 0.1152],
             'MAPE (%)': [1.73, 1.49, 1.18], 
-            'MSE': [0.1095, 0.0166, 0.0211],
+            'RMSE': np.sqrt([0.1095, 0.0166, 0.0211]),
             'R² Score': [0.9444, 0.9758, 0.9790]
         })
     
@@ -308,7 +309,7 @@ with med_term_tab:
             'ACORN': ['C', 'P', 'F'],
             'MAE': [0.7567, 0.4291, 0.4209],
             'MAPE (%)': [5.39, 5.93, 4.00],
-            'MSE': [0.1041, 0.2782, 0.2563],
+            'RMSE': np.sqrt([0.1041, 0.2782, 0.2563]),
         })
 
         st.dataframe(lstm_metrics_df)
@@ -357,7 +358,7 @@ with med_term_tab:
             'ACORN': ['C', 'P', 'F'],
             'MAE': [0.6392, 0.2938, 0.4093],
             'MAPE (%)': [4.50, 4.07, 3.88],
-            'MSE': [0.8968, 0.2516, 0.1423],
+            'RMSE': np.sqrt([0.8968, 0.2516, 0.1423]),
         })
 
         st.dataframe(rolling_metrics_df)
@@ -408,7 +409,7 @@ with med_term_tab:
             'ACORN': ['C', 'P', 'F'],
             'MAE': [0.5123, 0.2768, 0.3015],
             'MAPE (%)': [5.00, 4.83, 6.96],
-            'MSE': [1.147, 0.399, 0.355],
+            'RMSE': np.sqrt([1.147, 0.399, 0.355]),
         })
 
         st.dataframe(sarimax_metrics_df)
