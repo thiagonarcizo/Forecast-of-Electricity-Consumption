@@ -344,9 +344,9 @@ with med_term_tab:
         st.image("src/img/plot1lstm.png")
         st.image("src/img/plot2lstm.png")
         st.image("src/img/plot3lstm.png")
-        st.image("src/img/plot4lstm_rolling.png")
-        st.image("src/img/plot5lstm_rolling.png")
-        st.image("src/img/plot6lstm_rolling.png")
+        st.image("src/img/plot4lstm.png")
+        st.image("src/img/plot5lstm.png")
+        st.image("src/img/plot6lstm.png")
 
         
 
