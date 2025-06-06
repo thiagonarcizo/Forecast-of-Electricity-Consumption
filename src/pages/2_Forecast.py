@@ -96,8 +96,6 @@ with short_term_tab:
     with model_st_tab2:
         st.markdown(
             """
-## Per‐ACORN Short‐Term Load Forecasting (Random Forest)
-
 ### 1. Data Split by ACORN
 - **Sort & index**  
   - Sort half‐hourly data by `Acorn` and `DateTime`.  
@@ -145,9 +143,9 @@ with short_term_tab:
 1. **Retrain** on all train rows with the selected hyperparameters.  
 2. **Predict** consumption over the final 48 hours (test set).  
 3. **Compute Metrics**  
-   - **RMSE**: \(\sqrt{\frac{1}{n}\sum(y_{\text{true}} - y_{\text{pred}})^2}\)  
-   - **MAE**: \(\frac{1}{n}\sum |y_{\text{true}} - y_{\text{pred}}|\)  
-   - **MAPE**: \(\frac{100\%}{n}\sum \left|\frac{y_{\text{true}} - y_{\text{pred}}}{y_{\text{true}}}\right|\)
+   - **RMSE** 
+   - **MAE**:
+   - **MAPE**:
 
 ### Results for the test set
 """
@@ -165,10 +163,27 @@ with short_term_tab:
         st.image("src/img/plotrf3.png")
         st.markdown(
             """
-
+    After discussion with one of the professors, we realized that a 48h window might be too short to calculae errors.
+    So we retrained the model and increased the test set to a week. The results are below and indicate that the model
+    is not as good as the previous results indicated.
+"""
+        )
+        metrics_rf_df = pd.DataFrame({
+                'ACORN': ['C', 'P', 'F'],
+                'MAE': [0.0192, 0.0269, 0.0117],
+                'MAPE (%)': [7.1835, 18.1243, 5.7277], 
+                'RMSE': [0.0257, 0.0386, 0.0145]
+        })
+        st.dataframe(metrics_rf_df)
+        st.markdown(
+            """
+    ### Prediction for 13/01/2014 and 14/01/2014
 """
         )
 
+        st.image("src/img/plotrf4.png")
+        st.image("src/img/plotrf5.png")
+        st.image("src/img/plotrf6.png")
 
 
 with med_term_tab:
