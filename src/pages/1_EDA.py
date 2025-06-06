@@ -78,14 +78,42 @@ else:
     st.pyplot(fig4)
     st.pyplot(fig5)
     st.pyplot(fig6)
+    st.markdown('''
+---
 
+### **Remarks**
+
+1. **Weekend Effects**  
+   * Average consumption **increases over weekends,** especially for **ACORN-F** (**+5.8%**), followed by **ACORN-C** (**+4.11%**) and **ACORN-P** (**+2.4%**).  
+   * **Sundays** consistently show the **highest daily usage** across all groups.
+
+2. **Bank Holiday Patterns**  
+   * All groups show a **local spike** during **bank holidays**, but only **ACORN-C** shows a **notable jump** (**+10.7%**), compared to **+3.2%** for ACORN-F and **+1.6%** for ACORN-P.
+
+3. **Seasonal Trends**  
+   * All groups reach **peak average consumption in winter** and **lowest in summer**.  
+   * The average consumption on **spring** is **slightly higher** than on **autumn**.
+
+---
+''')
     st.subheader("Outlier Boxplots")
     fig1, fig2, fig3, fig4 = plot_daily_acorn_outlier_boxplots(daily_data_acorn, uk_bank_holidays=uk_bank_holidays)
     st.pyplot(fig1)
     st.pyplot(fig2)
     st.pyplot(fig3)
     st.pyplot(fig4) 
+    st.markdown('''
+---
 
+### **Remarks**
+
+4. **Outliers**  
+   * Besides some bank holidays like Christmas for ACORN-C, there are **not many outliers.**  
+   * Most occur in **summer months** and represent **less than 4%** of the month's data.  
+   * **July and October for ACORN-F** are exceptions, where **6.45%** of values are considered outliers.
+
+---
+''')
     st.header("Holiday Analysis")
     st.markdown('''
                 ### Holiday Electricity Consumption Analysis  
