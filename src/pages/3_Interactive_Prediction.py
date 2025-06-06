@@ -77,11 +77,11 @@ st.header("📊 Consumption Dashboard")
 if df_selection.empty:
     st.warning("No data available for the selected filters. Please adjust your selection.")
 else:
-    df_selection['Consumption'] = df_selection['Actual'].fillna(df_selection['Predicted'])
-    total_consumption = df_selection['Consumption'].sum()
-    average_consumption = df_selection['Consumption'].mean()
-    peak_consumption_date = df_selection.loc[df_selection['Consumption'].idxmax()]['Date'].date()
-    peak_consumption_value = df_selection['Consumption'].max()
+    df_selection['Conso_kWh'] = df_selection['Actual'].fillna(df_selection['Predicted'])
+    total_consumption = df_selection['Conso_kWh'].sum()
+    average_consumption = df_selection['Conso_kWh'].mean()
+    peak_consumption_date = df_selection.loc[df_selection['Conso_kWh'].idxmax()]['Date'].date()
+    peak_consumption_value = df_selection['Conso_kWh'].max()
 
     st.subheader("Key Metrics for Selected Period")
     col1, col2, col3 = st.columns(3)
@@ -100,9 +100,9 @@ else:
         id_vars=['Date', 'Acorn'],
         value_vars=['Actual', 'Predicted'],
         var_name='Source',
-        value_name='Consumption'
+        value_name='Conso_kWh'
     )
-    df_plot.dropna(subset=['Consumption'], inplace=True)
+    df_plot.dropna(subset=['Conso_kWh'], inplace=True)
 
     fig = px.line(
         df_plot,
@@ -130,7 +130,7 @@ else:
     
     col1, col2 = st.columns([2,1])
     with col1:
-        acorn_total = df_selection.groupby('Acorn')['Consumption'].sum().sort_values(ascending=False)
+        acorn_total = df_selection.groupby('Acorn')['Conso_kWh'].sum().sort_values(ascending=False)
         fig_bar = px.bar(
             acorn_total,
             x=acorn_total.index,
