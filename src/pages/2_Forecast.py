@@ -309,6 +309,85 @@ with med_term_tab:
     with model_tab4:
         st.subheader("MLP")
         st.markdown("30-day forecast using MLP model")
+        st.markdown(
+            """
+## Medium‐Term Load Forecasting with MLP (One Unified Model)
+
+### 1. Data and Feature Engineering
+- **Data Sources**  
+  - Daily consumption (`Conso_kWh`) for days \([0, t]\).  
+  - Daily weather features (temperature, humidity, wind speed, precipitation, etc.) for days \([0, t+30]\).  
+  - ACORN group code (categorical) per daily record.  
+  - Calendar features derived from each date:  
+    - Day of week, day of year, month, weekend/weekday flag, holiday flag.
+
+- **Construct Combined DataFrame**  
+  - Merge consumption and historical weather for days ≤ t.  
+  - Append 30‐day “future” rows (dates \(t+1\) to \(t+30\)) with weather forecasts and empty consumption.
+
+- **Final Feature Set**  
+  - **Numeric**:  
+    ```
+    temperature, humidity, windSpeed, precipitation,
+    dayofweek, dayofyear, month, is_weekend, is_holiday, nb_clients
+    ```  
+  - **Categorical**:  
+    ```
+    Acorn, windBearing, icon, precipType
+    ```  
+  - Drop any rows with missing weather or consumption (for training).
+
+### 2. Train/Test Split
+- **Define Training Window**  
+  - For each ACORN, let \(t\) = last date with known consumption.  
+  - **Training Set**: All rows where `Date ≤ t`.  
+  - **Forecast Set**: Rows where \(t < \text{Date} ≤ t+30\) (weather known, consumption unknown).
+
+### 3. Preprocessing Pipeline
+- **Scaling & Encoding**  
+  - **StandardScaler** on all numeric features (zero mean, unit variance).  
+  - **OneHotEncoder** on each categorical feature (`handle_unknown="ignore"`).
+
+- **Pipeline Structure**  
+  1. Apply scaling and one‐hot encoding.  
+  2. Forward transformed features into an `MLPRegressor`.
+
+### 4. MLP Model Configuration
+- **Initial Architecture**  
+  - Two hidden layers (e.g.\ 100 → 50 neurons).  
+  - Activation: ReLU; Solver: Adam with adaptive learning rate.  
+  - Weight‐decay (alpha) set to a small default.
+
+- **Hyperparameters to Tune**  
+  - **Hidden layers**: number of layers (1–3), neurons per layer (32–256).  
+  - **Regularization (alpha)**: \(10^{-6}\) – \(10^{-2}\).  
+  - **Learning rate (`learning_rate_init`)**: \(10^{-5}\) – \(10^{-2}\).  
+  - **Learning rate schedule**: constant vs. adaptive.  
+  - **Activation**: ReLU vs. tanh.  
+  - **Solver**: Adam vs. L-BFGS.  
+  - **Batch size**: 32, 64, 128.  
+  - **Tolerance (`tol`)**: \(10^{-5}\) – \(10^{-3}\).
+
+- **Optimization**  
+  - Use Optuna (50 trials) with TimeSeriesSplit (3 folds) on days \(≤ t\).  
+  - Objective: Minimize cross‐validated RMSE.
+
+### 5. Final Training and Evaluation
+1. **Retrain** on all days ≤ t using best hyperparameters.  
+2. **Predict** consumption for days \(t+1\) to \(t+30\).  
+3. **Compute Metrics on Hold‐Out (last 30 historical days)**:  
+   - **RMSE**, **MAE**, **MAPE**.  
+4. **Forecast Submission**: For days \(t+1\) – \(t+30\), report predicted values.
+
+### 6. Feature Importance (Permutation)
+- **Procedure**  
+  1. On hold‐out days \([t-29, t]\), permute each feature column and measure increase in RMSE.  
+  2. Repeat multiple permutations to obtain mean importance + standard deviation.
+
+- **Visualization Placeholder**  
+
+"""
+        )
 
     with model_tab5:
         st.subheader("SVM")
