@@ -311,21 +311,20 @@ with med_term_tab:
         st.markdown("30-day forecast using MLP model")
         st.markdown(
             """
-## Medium‐Term Load Forecasting with MLP (One Unified Model)
+## Per‐ACORN Medium-Term Load Forecasting (MLP)
 
 ### 1. Data and Feature Engineering
 - **Data Sources**  
-  - Daily consumption (`Conso_kWh`) for days \([0, t]\).  
-  - Daily weather features (temperature, humidity, wind speed, precipitation, etc.) for days \([0, t+30]\).  
-  - ACORN group code (categorical) per daily record.  
-  - Calendar features derived from each date:  
-    - Day of week, day of year, month, weekend/weekday flag, holiday flag.
+  - Daily consumption (`Conso_kWh`) for days [0, t].  
+  - Daily weather features (temperature, humidity, wind speed, precipitation, etc.) for days [0, t+30].  
+  - ACORN group label (categorical) for each daily record.  
+  - Calendar features: day of week, day of year, month, weekend/weekday flag, holiday flag.
 
-- **Construct Combined DataFrame**  
-  - Merge consumption and historical weather for days ≤ t.  
-  - Append 30‐day “future” rows (dates \(t+1\) to \(t+30\)) with weather forecasts and empty consumption.
+- **Combine into One DataFrame**  
+  - Merge consumption and historical weather for days ≤ t, partitioned by ACORN.  
+  - Append “future” rows for days t+1 through t+30 with weather forecasts; leave `Conso_kWh` blank for those dates.
 
-- **Final Feature Set**  
+- **Feature List**  
   - **Numeric**:  
     ```
     temperature, humidity, windSpeed, precipitation,
@@ -333,61 +332,84 @@ with med_term_tab:
     ```  
   - **Categorical**:  
     ```
-    Acorn, windBearing, icon, precipType
+    windBearing, icon, precipType
     ```  
-  - Drop any rows with missing weather or consumption (for training).
+  - **Group Code**:  
+    ```
+    Acorn
+    ```
 
-### 2. Train/Test Split
-- **Define Training Window**  
-  - For each ACORN, let \(t\) = last date with known consumption.  
-  - **Training Set**: All rows where `Date ≤ t`.  
-  - **Forecast Set**: Rows where \(t < \text{Date} ≤ t+30\) (weather known, consumption unknown).
+### 2. Train/Test Split (Per ACORN)
+For each ACORN group separately:  
+1. **Identify End of Historical Window**  
+   - Let t = last date with known `Conso_kWh` for that ACORN.  
+2. **Training Set**  
+   - All rows with `Date ≤ t`.  
+3. **Forecast Set**  
+   - Rows with t < Date ≤ t+30 (weather known, consumption missing).
 
-### 3. Preprocessing Pipeline
-- **Scaling & Encoding**  
-  - **StandardScaler** on all numeric features (zero mean, unit variance).  
-  - **OneHotEncoder** on each categorical feature (`handle_unknown="ignore"`).
+### 3. Preprocessing and Pipeline Construction (Per ACORN)
+- **Preprocessing Steps**  
+  1. Standardize all numeric features (zero mean, unit variance).  
+  2. One-hot encode each categorical feature (`handle_unknown="ignore"`).
 
-- **Pipeline Structure**  
-  1. Apply scaling and one‐hot encoding.  
-  2. Forward transformed features into an `MLPRegressor`.
+- **MLPRegressor Configuration**  
+  - Initial architecture: two hidden layers (e.g. 100 → 50 neurons), ReLU activation, Adam solver, small L2 penalty.  
+  - Later tuned via Optuna.
 
-### 4. MLP Model Configuration
-- **Initial Architecture**  
-  - Two hidden layers (e.g.\ 100 → 50 neurons).  
-  - Activation: ReLU; Solver: Adam with adaptive learning rate.  
-  - Weight‐decay (alpha) set to a small default.
+- **Pipeline Sequence**  
+  1. **StandardScaler** on numeric features.  
+  2. **OneHotEncoder** on categorical features.  
+  3. **MLPRegressor** with tuned hyperparameters.
 
-- **Hyperparameters to Tune**  
-  - **Hidden layers**: number of layers (1–3), neurons per layer (32–256).  
-  - **Regularization (alpha)**: \(10^{-6}\) – \(10^{-2}\).  
-  - **Learning rate (`learning_rate_init`)**: \(10^{-5}\) – \(10^{-2}\).  
-  - **Learning rate schedule**: constant vs. adaptive.  
-  - **Activation**: ReLU vs. tanh.  
-  - **Solver**: Adam vs. L-BFGS.  
-  - **Batch size**: 32, 64, 128.  
-  - **Tolerance (`tol`)**: \(10^{-5}\) – \(10^{-3}\).
+  
+### 4. Hyperparameter Tuning with Optuna (Per ACORN)
+- **Search Space**  
+- Hidden layers: 1–3 layers, each with 32–256 neurons.  
+- L2 regularization (`alpha`): 1e-6 – 1e-2 (log scale).  
+- Learning rate (`learning_rate_init`): 1e-5 – 1e-2 (log scale).  
+- Learning rate schedule: {constant, adaptive}.  
+- Activation: {relu, tanh}.  
+- Solver: {adam, lbfgs}.  
+- Batch size: {32, 64, 128}.  
+- Tolerance (`tol`): 1e-5 – 1e-3 (log scale).
 
-- **Optimization**  
-  - Use Optuna (50 trials) with TimeSeriesSplit (3 folds) on days \(≤ t\).  
-  - Objective: Minimize cross‐validated RMSE.
+- **Tuning Steps**  
+1. Instantiate `MLPRegressor` with trial’s hyperparameters.  
+2. Perform 3-fold time-series cross-validation on the ACORN’s training set, optimizing RMSE.  
+3. Record best hyperparameters and cross-validated RMSE.
 
-### 5. Final Training and Evaluation
+### 5. Final Training and Evaluation (Per ACORN)
 1. **Retrain** on all days ≤ t using best hyperparameters.  
-2. **Predict** consumption for days \(t+1\) to \(t+30\).  
-3. **Compute Metrics on Hold‐Out (last 30 historical days)**:  
-   - **RMSE**, **MAE**, **MAPE**.  
-4. **Forecast Submission**: For days \(t+1\) – \(t+30\), report predicted values.
+2. **Predict** consumption for days t+1 – t+30.  
+3. **Evaluate on Last 30 Historical Days**  
+ - RMSE, MAE, MAPE on hold-out block just before t.  
+4. **Forecast Submission**  
+ - For days t+1 – t+30, report predicted `Conso_kWh`.
 
-### 6. Feature Importance (Permutation)
-- **Procedure**  
-  1. On hold‐out days \([t-29, t]\), permute each feature column and measure increase in RMSE.  
-  2. Repeat multiple permutations to obtain mean importance + standard deviation.
+### Results on test set
+ """
+        )
+        metrics_mlp_df = pd.DataFrame({
+                'ACORN': ['C', 'P', 'F'],
+                'MAE': [0.8805, 0.5238, 0.3556],
+                'MAPE (%)': [6.0004, 7.3021, 3.3227], 
+                'RMSE': [1.1832, 0.6807, 0.4424]
+            })
+        st.dataframe(metrics_mlp_df)
+        st.image("src/img/plot5mlp.png")
+        st.image("src/img/plot6mlp.png")
+        st.image("src/img/plot7mlp.png")
 
-- **Visualization Placeholder**  
-
+        st.markdown(
+            """
+### Ahead predictions for 30 days
 """
         )
+        st.image("src/img/plot1mlp.png")
+        st.image("src/img/plot2mlp.png")
+        st.image("src/img/plot3mlp.png")
+        st.image("src/img/plot4mlp.png")
 
     with model_tab5:
         st.subheader("SVM")
