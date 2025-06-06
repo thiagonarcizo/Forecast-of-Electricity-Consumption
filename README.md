@@ -42,7 +42,7 @@ Within **src/pages** reside the Streamlit pages:
 `1_EDA.py`, `2_Forecast.py`, `3_Dashboard.py` and `4_Conclusion.py`.
 
 ## Streamlit Pages
-The web interface is organised into the following sections:
+The [web interface](https://group-4.streamlit.app/) is organised into the following sections:
 
 1. **Introduction** – project outline and objectives.
 2. **EDA** – exploratory analysis with interactive visualisations of the ACORN groups.
