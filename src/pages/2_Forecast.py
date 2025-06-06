@@ -445,43 +445,7 @@ with med_term_tab:
 
         st.image("src/img/plot1sarimax.png")
         st.image("src/img/plot2sarimax.png")
-        st.image("src/img/plot3sarimax.png")
 
-        st.header("Static Forecast vs. Rolling Forecast")
-
-        st.markdown("""
-    ## Static SARIMAX Forecast
-
-    ### Building the Exogenous Matrix
-    - Fit a `ColumnTransformer` on training exogenous columns (standardize numeric, one-hot category).
-    - Transform the 30-day test exogenous features at once to create a (30 × K) array.
-    - Call `model.get_forecast(steps=30, exog=exog_test_array)` to obtain all 30 predictions in one batch.
-    - Does **not** update exogenous inputs mid-horizon; uses the same precomputed values each day.
-
-    ## Rolling SARIMAX Forecast
-
-    ### Updating Exogenous Inputs Iteratively
-    - For each day i in the 30-day forecast:
-      1. Take the fitted SARIMAX model (trained on all history up to day i–1).
-      2. Provide the single-day exogenous vector for day i (transformed via ColumnTransformer).
-      3. Use `model.predict(start=last_train_index + i, end=last_train_index + i, exog=[exog_i])` to forecast one step ahead.
-      4. Append the forecasted value to the endogenous series, then refit or update the state if needed.
-    - This feedback loop ensures each day's forecast uses the very latest actuals and dynamic exogenous inputs.
-
-    ### Comparison
-
-    - **Static SARIMAX**  
-      - Computes all 30 forecasts in one call, using a fixed exogenous matrix for the entire horizon.  
-      - Simpler and faster, but cannot adapt to deviations in exogenous patterns that only reveal themselves mid-horizon.
-
-    - **Rolling SARIMAX**  
-      - Forecasts one day at a time, feeding each forecast back into future predictions and updating exogenous values each step.  
-      - More computationally expensive but tracks evolving weather or calendar flags that may change during the month.
-
-    Because rolling SARIMAX incorporates the latest exogenous conditions and any new observations, it can correct for shifts in weather or demand patterns, typically outperforming the static approach when underlying drivers evolve suddenly.
-        """)
-        st.image("src/img/plot1sarimax.png")
-        st.image("src/img/plot2sarimax.png")
 
 
 
