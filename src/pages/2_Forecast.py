@@ -388,7 +388,7 @@ with med_term_tab:
       - Rolling MAPE values below 4.5%, demonstrating improved accuracy over the static approach.
       - ACORN F achieved the lowest MAPE at 3.20%.
             """)
-        st.image("src/img/plot1lstmrf.png")
+        st.image("src/img/plot1lstmRF.png")
         st.image("src/img/plot2lstmrf.png")
         st.image("src/img/plot3lstmrf.png")
         st.image("src/img/plot4lstmrf.png")
