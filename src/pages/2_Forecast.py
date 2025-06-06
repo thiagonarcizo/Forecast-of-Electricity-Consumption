@@ -327,12 +327,14 @@ with med_term_tab:
 - **Feature List**  
   - **Numeric**:  
     ```
-    temperature, humidity, windSpeed, precipitation,
-    dayofweek, dayofyear, month, is_weekend, is_holiday, nb_clients
+    temperatureMax, dewPoint, cloudCover, windSpeed, pressure,
+    visibility, humidity, uvIndex, temperatureMin, moonPhase,
+    dayofweek, month, dayofyear, dayofweek_sin, dayofweek_cos,
+    month_sin, month_cos, dayofyear_sin, dayofyear_cos
     ```  
   - **Categorical**:  
     ```
-    windBearing, icon, precipType
+    windBearing, icon, precipType, is_holiday, is_weekend
     ```  
   - **Group Code**:  
     ```
@@ -413,3 +415,102 @@ For each ACORN group separately:
 
     with model_tab5:
         st.subheader("SVM")
+        st.markdown("30-day forecast using SVM model")
+        st.markdown(
+            """
+### 1. Data and Feature Engineering
+- **Data Sources**  
+  - Daily consumption (`Conso_kWh`) for days [0, t] per ACORN.  
+  - Daily weather features (temperature, humidity, wind speed, precipitation, etc.) for days [0, t+30].  
+  - ACORN group label (categorical) for each daily record.  
+  - Calendar features: day of week, day of year, month, weekend/weekday flag, holiday flag.
+
+- **Combine into One DataFrame**  
+  - Merge consumption and historical weather for days ≤ t.  
+  - Append “future” rows for days t+1 through t+30 with weather forecasts; leave `Conso_kWh` empty for those dates.
+
+- **Feature List**  
+  - **Numeric**:  
+    ```
+    temperatureMax, dewPoint, cloudCover, windSpeed, pressure,
+    visibility, humidity, uvIndex, temperatureMin, moonPhase,
+    dayofweek, month, dayofyear, dayofweek_sin, dayofweek_cos,
+    month_sin, month_cos, dayofyear_sin, dayofyear_cos
+    ```  
+  - **Categorical**:  
+    ```
+    windBearing, icon, precipType, is_holiday, is_weekend
+    ```  
+  - **Group Code**:  
+    ```
+    Acorn
+    ```
+
+### 2. Train/Test Split (Per ACORN)
+For each ACORN group separately:  
+1. **Identify End of Historical Window**  
+   - Let t = last date with known `Conso_kWh` for that ACORN.  
+2. **Training Set**  
+   - All rows with `Date ≤ t`.  
+3. **Forecast Set**  
+   - Rows with t < Date ≤ t+30 (weather known, consumption missing).
+
+### 3. Preprocessing and Pipeline (Per ACORN)
+- **Preprocessing Steps**  
+  1. Standardize all numeric features (zero mean, unit variance).  
+  2. One-hot encode each categorical feature (`handle_unknown="ignore"`).
+
+- **SVR Configuration**  
+  - Kernel: RBF (or linear/poly as tuned).  
+  - Hyperparameters to tune: C (penalty), ε (epsilon), γ (for RBF), degree & coef0 (for poly).
+
+- **Pipeline Sequence**
+  1. **StandardScaler** on numeric features.  
+  2. **OneHotEncoder** on categorical features.  
+  3. **SVR** with tuned hyperparameters.
+
+
+### 4. Hyperparameter Tuning with Optuna (Per ACORN)
+- **Search Space**  
+- `kernel`: {rbf, linear, poly}  
+- `C`: 1e-2 – 1e1 (log scale)  
+- `epsilon`: 1e-2 – 1.0 (log scale)  
+- If kernel ∈ {rbf, poly}: `gamma`: 1e-4 – 1.0 (log scale)  
+- If kernel = poly: `degree`: {2, 3, 4}, `coef0`: {0.0, 0.1, 1.0}
+
+- **Tuning Steps**  
+1. Instantiate SVR with trial’s hyperparameters.  
+2. Perform 3-fold time-series cross-validation on the ACORN’s training set, optimizing RMSE.  
+3. Record best hyperparameters and CV RMSE.
+
+### 5. Final Training and Evaluation (Per ACORN)
+1. **Retrain** on all days ≤ t using best hyperparameters.  
+2. **Predict** consumption for days t+1 – t+30.  
+3. **Evaluate on Last 30 Historical Days**  
+ - RMSE, MAE, MAPE on hold-out block just before t.  
+4. **Forecast Submission**  
+ - For days t+1 – t+30, report predicted `Conso_kWh`.
+ 
+### Results on test set
+"""
+        )
+        metrics_svm_df = pd.DataFrame({
+            'ACORN': ['C', 'P', 'F'],
+                'MAE': [0.8938, 0.4108, 0.3810],
+                'MAPE (%)': [5.9040, 5.7737, 3.5947], 
+                'RMSE': [1.3435, 0.4723, 0.4846]
+        })
+        st.dataframe(metrics_svm_df)
+        st.image("src/img/plotsvm1.png")
+        st.image("src/img/plotsvm2.png")
+        st.image("src/img/plotsvm3.png")
+
+        st.markdown(
+            """
+### Ahead predictions for 30 days
+"""
+        )
+        st.image("src/img/plotsvm4.png")
+        st.image("src/img/plotsvm5.png")
+        st.image("src/img/plotsvm6.png")
+        st.image("src/img/plotsvm7.png")
