@@ -15,8 +15,11 @@ Use the filters on the sidebar to explore the data for different ACORN groups an
 @st.cache_data
 def load_data(actual_path, predicted_path):
     """Loads and merges actual and predicted consumption data."""
-    if not os.path.exists(actual_path) or not os.path.exists(predicted_path):
-        st.error("Data file not found.")
+    if not os.path.exists(actual_path):
+        st.error(f"Data file not found: {actual_path}")
+        return pd.DataFrame()
+    if not os.path.exists(predicted_path):
+        st.error(f"Data file not found: {predicted_path}")
         return pd.DataFrame()
 
     df_actual = pd.read_csv(actual_path)
@@ -38,15 +41,27 @@ def load_data(actual_path, predicted_path):
     df_merged.sort_values(by=['Acorn', 'Date'], inplace=True)
     return df_merged
 
+st.sidebar.header("Filter Options")
+
+model_choice = st.sidebar.selectbox(
+    "Choose a prediction model:",
+    ('LightGBM', 'LSTM'),
+    key="model_selector"
+)
+
 actual_data_path = 'data/02_processed/csv/group_4_daily.csv'
-predicted_data_path_lightgbm = 'data/02_processed/csv/group_4_daily_predict_lightgbm.csv'
-predicted_data_path_lstm = 'data/02_processed/csv/group_4_daily_predict_lstm.csv'
-df = load_data(actual_data_path, predicted_data_path_lightgbm, predicted_data_path_lstm)
+if model_choice == 'LightGBM':
+    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lightgbm.csv'
+elif model_choice == 'LSTM':
+    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lstm.csv'
+else:
+    st.error("Invalid model choice. Please select a valid model.")
+    st.stop()
+
+df = load_data(actual_data_path, predicted_data_path)
 
 if df.empty:
     st.stop()
-
-st.sidebar.header("Filter Options")
 
 unique_acorns = df['Acorn'].unique()
 acorn_groups = st.sidebar.multiselect(
