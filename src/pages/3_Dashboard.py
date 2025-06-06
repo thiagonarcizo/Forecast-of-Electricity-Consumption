@@ -177,6 +177,46 @@ else:
     )
     st.plotly_chart(fig, use_container_width=True)
 
+    st.markdown("---")
+    st.header(f"📈 Focus on {model_choice} Prediction Period")
+
+    df_predicted_period = df_selection[df_selection['Predicted'].notna()].copy()
+
+    if df_predicted_period.empty:
+        st.warning("No prediction data available for the selected date range.")
+    else:
+        st.subheader("Key Metrics for Prediction Period")
+        
+        predicted_total = df_predicted_period['Predicted'].sum()
+        predicted_average = df_predicted_period['Predicted'].mean()
+        peak_predicted_date = df_predicted_period.loc[df_predicted_period['Predicted'].idxmax()]['Date'].date()
+        peak_predicted_value = df_predicted_period['Predicted'].max()
+
+        p_col1, p_col2, p_col3 = st.columns(3)
+        with p_col1:
+            st.metric(label="Total Predicted Consumption (kWh)", value=f"{predicted_total:,.0f}")
+        with p_col2:
+            st.metric(label="Avg. Daily Predicted Consumption (kWh)", value=f"{predicted_average:,.2f}")
+        with p_col3:
+            st.metric(label=f"Peak Prediction ({peak_predicted_date})", value=f"{peak_predicted_value:,.2f} kWh")
+        
+        st.subheader("Predicted Consumption Trend")
+        fig_pred_only = px.line(
+            df_predicted_period,
+            x='Date',
+            y='Predicted',
+            color='Acorn',
+            title=f'{model_choice} Predicted Daily Consumption',
+            labels={'Predicted': 'Predicted Consumption (kWh)', 'Date': 'Date', 'Acorn': 'ACORN Group'},
+            hover_data={'Date': '|%B %d, %Y', 'Predicted': ':.2f'}
+        )
+        fig_pred_only.update_layout(
+            plot_bgcolor="rgba(0,0,0,0)",
+            xaxis=(dict(showgrid=False)),
+            legend_title_text='ACORN Groups'
+        )
+        st.plotly_chart(fig_pred_only, use_container_width=True)
+
     st.subheader("Consumption Breakdown by ACORN Group")
     
     col1, col2 = st.columns([2,1])
