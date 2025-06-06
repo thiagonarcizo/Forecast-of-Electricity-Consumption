@@ -105,12 +105,12 @@ else:
     st.markdown('''
 ---
 
-### **Remarks (continued)**
+### **Remarks**
 
 4. **Outliers**  
    * Besides some bank holidays like Christmas for ACORN-C, there are **not many outliers.**  
    * Most occur in **summer months** and represent **less than 4%** of the month's data.  
-   * **July and October for ACORN-F** are exceptions, where **6.45%** of values are flagged as outliers.
+   * **July and October for ACORN-F** are exceptions, where **6.45%** of values are considered outliers.
 
 ---
 ''')
