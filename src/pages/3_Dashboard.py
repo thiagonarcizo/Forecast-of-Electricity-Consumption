@@ -40,7 +40,8 @@ def load_data(actual_path, predicted_path):
 
 actual_data_path = 'data/02_processed/csv/group_4_daily.csv'
 predicted_data_path_lightgbm = 'data/02_processed/csv/group_4_daily_predict_lightgbm.csv'
-df = load_data(actual_data_path, predicted_data_path_lightgbm)
+predicted_data_path_lstm = 'data/02_processed/csv/group_4_daily_predict_lstm.csv'
+df = load_data(actual_data_path, predicted_data_path_lightgbm, predicted_data_path_lstm)
 
 if df.empty:
     st.stop()
