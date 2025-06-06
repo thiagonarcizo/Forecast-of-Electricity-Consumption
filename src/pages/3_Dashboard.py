@@ -45,7 +45,7 @@ st.sidebar.header("Filter Options")
 
 model_choice = st.sidebar.selectbox(
     "Choose a prediction model:",
-    ('LSTM', 'LightGBM'),
+    ('LSTM', 'LightGBM', 'MLP', 'SVM', 'SARIMAX'),
     key="model_selector"
 )
 
@@ -54,6 +54,12 @@ if model_choice == 'LightGBM':
     predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lightgbm.csv'
 elif model_choice == 'LSTM':
     predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_lstm.csv'
+elif model_choice == 'MLP':
+    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_mlp.csv'
+elif model_choice == 'SVM':
+    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_svm.csv'
+elif model_choice == 'SARIMAX':
+    predicted_data_path = 'data/02_processed/csv/group_4_daily_predict_sarimax.csv'
 else:
     st.error("Invalid model choice. Please select a valid model.")
     st.stop()
