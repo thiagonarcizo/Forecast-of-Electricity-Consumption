@@ -403,7 +403,7 @@ with med_term_tab:
 
     with model_tab3:
         st.subheader("SARIMAX")
-        st.markdown("30-day forecast using Prophet model")
+        st.markdown("30-day forecast using SARIMAX model")
 
         sarimax_metrics_df = pd.DataFrame({
             'ACORN': ['C', 'P', 'F'],
