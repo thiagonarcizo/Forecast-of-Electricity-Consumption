@@ -178,7 +178,7 @@ else:
     st.plotly_chart(fig, use_container_width=True)
 
     st.markdown("---")
-    st.header(f"📈 Focus on {model_choice} Prediction Period")
+    st.header(f"📈 Focus on {model_choice} Prediction Period (Jan-Fev 2014)")
 
     df_predicted_period = df_selection[df_selection['Predicted'].notna()].copy()
 
