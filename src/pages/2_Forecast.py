@@ -19,6 +19,7 @@ with short_term_tab:
 
     model_st_tab1, model_st_tab2 = st.tabs(["KNearestNeighbors Model", "RandomForest Model"])
     with model_st_tab1:
+        st.subheader("KNearestNeighbors Forecast")
         st.markdown("""
 ### 1. Data Split by ACORN
 - **Sort & index**  
@@ -26,7 +27,7 @@ with short_term_tab:
   - Assign a within‐group index (`group_idx`) for each ACORN.
 
 - **48‐hour test horizon**  
-  - For each ACORN, let _N₁_ = total rows in that group.  
+  - For each ACORN, let _Nᵢ_ = total rows in that group.  
   - Mark the final 96 rows (`group_idx ≥ Nᵢ − 96`) as test (48 hours), and the rest as train.
 
 ### 2. Preprocessing & Pipeline (per ACORN)
@@ -94,6 +95,7 @@ with short_term_tab:
     
     
     with model_st_tab2:
+        st.subheader("RandomForest Forecast")
         st.markdown(
             """
 ### 1. Data Split by ACORN
@@ -311,8 +313,6 @@ with med_term_tab:
         st.markdown("30-day forecast using MLP model")
         st.markdown(
             """
-## Per‐ACORN Medium-Term Load Forecasting (MLP)
-
 ### 1. Data and Feature Engineering
 - **Data Sources**  
   - Daily consumption (`Conso_kWh`) for days [0, t].  
