@@ -38,9 +38,9 @@ def load_data(actual_path, predicted_path):
     df_merged.sort_values(by=['Acorn', 'Date'], inplace=True)
     return df_merged
 
-actual_data_path = 'data/02_processed/csv/group_4_daily.csv'
+actual_data_path_lightgbm = 'data/02_processed/csv/group_4_daily_lightgbm.csv'
 predicted_data_path = 'data/02_processed/csv/group_4_daily_predict.csv'
-df = load_data(actual_data_path, predicted_data_path)
+df = load_data(actual_data_path_lightgbm, predicted_data_path)
 
 if df.empty:
     st.stop()
