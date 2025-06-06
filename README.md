@@ -30,7 +30,7 @@ The main folders at the repository root are:
 - **src/** – Streamlit application and supporting modules
 - **data/** – raw, interim and processed data sets
 - **models/** – saved machine learning artefacts
-- **notebooks/** – general exploratory notebooks
+- **notebooks/** – **DEFINITIVE** notebooks
 - **notebooks_alexsandro/** – experiments by Alexsandro
 - **notebooks_gustavo/** – experiments by Gustavo
 - **notebooks_martin/** – experiments by Martin
